@@ -1,0 +1,9 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <!-- Material theme details -->
+    <color name="theme_main">#ff0069ff</color>
+    <color name="theme_main_dark">#ff0058ff</color>
+    <color name="theme_accent">#ffff0022</color>
+
+    <color name="divider_settings">#53000000</color>
+</resources>
