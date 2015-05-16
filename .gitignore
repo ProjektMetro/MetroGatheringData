@@ -30,3 +30,4 @@ gradle.properties
 *.iml
 .idea/
 app/fabric.properties
+app/src/main/java/pl/warszawa/gdg/metrodatacollector/data/ParseInitOutside.java
