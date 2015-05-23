@@ -24,7 +24,7 @@ public class ParseHelper {
         query.findInBackground(findCallback);
     }
 
-    public static void getStation(String name,FindCallback findCallback) {
+    public static void getStation(String name, FindCallback findCallback) {
         ParseQuery<ParseObject> query = ParseQuery.getQuery(Station.PARSE_CLASS_STATION);
         query.whereEqualTo(Station.PARSE_NAME, (name));
         query.findInBackground(findCallback);
@@ -83,5 +83,34 @@ public class ParseHelper {
         }
         ids.add(cellId);
         list.get(0).addAllUnique(arrayName, ids);
+    }
+
+    public static Station getStation(ParseObject parseObject) {
+        if(parseObject == null) {
+            return null;
+        }
+
+        Station station = new Station(new Station.Builder(parseObject.getString(Station.PARSE_NAME)));
+
+        if(parseObject.getList(Station.PARSE_PLAY) != null) {
+            station.setCellIdsPlay(parseObject.getList(Station.PARSE_PLAY).toArray(new String[parseObject.getList(Station.PARSE_PLAY).size()]));
+        }
+        if(parseObject.getList(Station.PARSE_PLUS) != null) {
+            station.setCellIdsPlus(parseObject.getList(Station.PARSE_PLUS).toArray(new String[parseObject.getList(Station.PARSE_PLUS).size()]));
+        }
+        if(parseObject.getList(Station.PARSE_OTHER) != null) {
+            station.setCellIdsOther(parseObject.getList(Station.PARSE_OTHER).toArray(new String[parseObject.getList(Station.PARSE_OTHER).size()]));
+        }
+        if(parseObject.getList(Station.PARSE_TMOBILE) != null) {
+            station.setCellIdsTmobile(parseObject.getList(Station.PARSE_TMOBILE).toArray(new String[parseObject.getList(Station.PARSE_TMOBILE).size()]));
+        }
+        if(parseObject.getList(Station.PARSE_ORANGE) != null) {
+            station.setCellIdsOrange(parseObject.getList(Station.PARSE_ORANGE).toArray(new String[parseObject.getList(Station.PARSE_ORANGE).size()]));
+        }
+
+        station.setDistanceInMeters(parseObject.getInt(Station.PARSE_DISTANCE_METERS));
+        station.setDistanceInSeconds(parseObject.getInt(Station.PARSE_DISTANCE_SECONDS));
+        
+        return station;
     }
 }

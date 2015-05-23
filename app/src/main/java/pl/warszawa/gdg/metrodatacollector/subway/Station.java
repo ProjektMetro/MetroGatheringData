@@ -46,9 +46,13 @@ public class Station extends MapElement {
         private String [] cellIdsOther;
 
         private final String name;
-        private final List<SubwayLine> lines;
+        private List<SubwayLine> lines;
         private boolean separatedPlatforms;
 
+
+        public Builder(String name) {
+            this.name = name;
+        }
 
         public Builder(String name, List<SubwayLine> lines) {
             this.name = name;
@@ -140,8 +144,10 @@ public class Station extends MapElement {
         name = builder.name;
         lines = builder.lines;
 
-        for(SubwayLine line : lines) {
-            line.addStation(this);
+        if(lines !=null) {
+            for (SubwayLine line : lines) {
+                line.addStation(this);
+            }
         }
 
         setLocation(builder.location);

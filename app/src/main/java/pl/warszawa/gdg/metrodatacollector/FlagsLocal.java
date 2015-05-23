@@ -3,7 +3,7 @@ package pl.warszawa.gdg.metrodatacollector;
 
 public class FlagsLocal {
     public static final boolean fabricEnabled = false;
-    public static final boolean parseEnabled = false;
+    public static final boolean parseEnabled = true;
     public static final boolean parsePushes = true;
     public static final boolean uploadOnline = false;
     public static final boolean writeFile = false;

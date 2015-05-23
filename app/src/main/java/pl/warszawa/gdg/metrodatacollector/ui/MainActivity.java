@@ -37,7 +37,6 @@ public class MainActivity extends AppCompatActivity {
         ButterKnife.inject(this);
         EventBus.getDefault().register(this);
         phoneCellListener = new PhoneCellListener(MainActivity.this);
-        NotificationHelper.showNotificationNewPlace("adsasd", MainActivity.this);
     }
 
     @Override
