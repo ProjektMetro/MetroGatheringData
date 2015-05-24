@@ -4,41 +4,11 @@
     android:layout_height="match_parent"
     android:orientation="vertical">
 
-    <Spinner
-        android:id="@+id/spinnerSelectType"
+    <AutoCompleteTextView
+        android:id="@+id/textViewSelectStation"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
-        android:layout_gravity="center_horizontal"
         android:layout_margin="10dp" />
-
-    <View
-        android:layout_width="match_parent"
-        android:layout_height="1dp"
-        android:background="@color/divider_settings" />
-
-    <EditText
-        android:id="@+id/editPlaceName"
-        android:layout_width="match_parent"
-        android:layout_height="wrap_content"
-        android:layout_margin="10dp"
-        android:hint="Place name" />
-
-    <View
-        android:layout_width="match_parent"
-        android:layout_height="1dp"
-        android:background="@color/divider_settings" />
-
-    <Spinner
-        android:id="@+id/spinnerSelectStation"
-        android:layout_width="match_parent"
-        android:layout_height="wrap_content"
-        android:layout_gravity="center_horizontal"
-        android:layout_margin="10dp" />
-
-    <View
-        android:layout_width="match_parent"
-        android:layout_height="1dp"
-        android:background="@color/divider_settings" />
 
     <CheckBox
         android:id="@+id/checkBoxOutside"

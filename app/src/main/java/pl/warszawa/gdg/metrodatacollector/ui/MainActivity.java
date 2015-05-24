@@ -1,5 +1,6 @@
 package pl.warszawa.gdg.metrodatacollector.ui;
 
+import android.content.Intent;
 import android.os.Bundle;
 import android.support.v7.app.AppCompatActivity;
 import android.telephony.PhoneStateListener;
@@ -78,6 +79,11 @@ public class MainActivity extends AppCompatActivity {
         } else {
             unregisterToCellEvent();
         }
+    }
+
+    @OnClick(R.id.buttonAddPlace)
+    public void addPlaceClicked() {
+        startActivity(new Intent(this, ActivityAddNewPoint.class));
     }
 
     @Override
