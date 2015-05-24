@@ -3,16 +3,21 @@ package pl.warszawa.gdg.metrodatacollector.ui;
 import android.content.Context;
 import android.os.Bundle;
 import android.support.v7.app.AppCompatActivity;
+import android.telephony.NeighboringCellInfo;
+import android.telephony.TelephonyManager;
+import android.view.Gravity;
 import android.view.LayoutInflater;
 import android.view.Menu;
 import android.view.MenuItem;
 import android.view.View;
 import android.view.ViewGroup;
 import android.widget.AdapterView;
+import android.widget.ArrayAdapter;
 import android.widget.AutoCompleteTextView;
 import android.widget.BaseAdapter;
 import android.widget.Filter;
 import android.widget.Filterable;
+import android.widget.ListView;
 import android.widget.TextView;
 
 import com.google.common.base.Function;
@@ -38,6 +43,9 @@ public class ActivityAddNewPoint extends AppCompatActivity {
     @InjectView(R.id.textViewSelectStation)
     AutoCompleteTextView selectStation;
 
+    @InjectView(R.id.listViewNeighboringCells)
+    ListView listViewNeighboringCells;
+
     private String selectedStation;
     private List<String> stationList;
 
@@ -48,10 +56,11 @@ public class ActivityAddNewPoint extends AppCompatActivity {
         ButterKnife.inject(this);
 
         NotificationHelper.hideNotificationNewPlace(ActivityAddNewPoint.this);
-        receiveStationList();
+        setupMetroStationList();
+        setupNeighboringCellList();
     }
 
-    private void receiveStationList() {
+    private void setupMetroStationList() {
         ParseHelper.getAllStations(new FindCallback<ParseObject>() {
             @Override
             public void done(List<ParseObject> list, ParseException e) {
@@ -85,6 +94,25 @@ public class ActivityAddNewPoint extends AppCompatActivity {
     private void stationItemClicked(int position) {
         selectedStation = stationList.get(position);
         selectStation.setError(null);
+    }
+
+    private void setupNeighboringCellList() {
+        TextView header = new TextView(this);
+        header.setGravity(Gravity.CENTER);
+        header.setText("Neighboring Cells:");
+        listViewNeighboringCells.addHeaderView(header);
+
+        TelephonyManager telephonyManager = (TelephonyManager) getSystemService(Context.TELEPHONY_SERVICE);
+        List<NeighboringCellInfo> neighboringCellInfo = telephonyManager.getNeighboringCellInfo();
+
+        List<String> neighborStringList = Lists.newArrayList();
+        for (NeighboringCellInfo cellInfo : neighboringCellInfo) {
+            neighborStringList.add("Cid: " + cellInfo.getCid() + "\n" +
+                    "Type: " + cellInfo.getNetworkType() + "\n" +
+                    "Psc: " + cellInfo.getPsc() + "\n" +
+                    "Rssi: " + cellInfo.getRssi());
+        }
+        listViewNeighboringCells.setAdapter(new ArrayAdapter<>(this, android.R.layout.simple_list_item_1, neighborStringList));
     }
 
     @OnTextChanged(R.id.textViewSelectStation)

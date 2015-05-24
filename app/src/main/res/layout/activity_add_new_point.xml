@@ -49,4 +49,9 @@
         android:layout_height="1dp"
         android:background="@color/divider_settings" />
 
+    <ListView
+        android:id="@+id/listViewNeighboringCells"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content" />
+
 </LinearLayout>
