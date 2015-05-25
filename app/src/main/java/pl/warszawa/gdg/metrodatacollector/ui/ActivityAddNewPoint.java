@@ -263,7 +263,7 @@ public class ActivityAddNewPoint extends AppCompatActivity {
         public View getView(int position, View convertView, ViewGroup parent) {
             ViewHolder holder = getViewHolder(convertView, parent);
             holder.text1.setText(getItem(position));
-            return convertView;
+            return holder.getView();
         }
 
         private ViewHolder getViewHolder(View convertView, ViewGroup parent) {
@@ -282,8 +282,15 @@ public class ActivityAddNewPoint extends AppCompatActivity {
             @InjectView(android.R.id.text1)
             TextView text1;
 
+            final private View view;
+
             public ViewHolder(View view) {
+                this.view = view;
                 ButterKnife.inject(this, view);
+            }
+
+            public View getView() {
+                return view;
             }
         }
 
@@ -310,7 +317,7 @@ public class ActivityAddNewPoint extends AppCompatActivity {
             protected void publishResults(CharSequence constraint, FilterResults results) {
                 filtered.clear();
                 if (results.values != null) {
-                    filtered.addAll((List<String>) results.values);
+                    filtered.addAll((List) results.values);
                 }
                 notifyDataSetChanged();
             }
