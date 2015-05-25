@@ -2,8 +2,6 @@ package pl.warszawa.gdg.metrodatacollector.subway;
 
 import android.location.Location;
 
-import com.parse.ParseObject;
-
 public class MapElement {
 
     private int distanceInMeters;
@@ -92,6 +90,4 @@ public class MapElement {
     public void setCellIdsOrange(String[] cellIdsOrange) {
         this.cellIdsOrange = cellIdsOrange;
     }
-
-    public ParseObject getParseObject(){return null;}
 }

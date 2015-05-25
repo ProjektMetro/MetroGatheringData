@@ -5,6 +5,12 @@ public class FlagsLocal {
     public static final boolean fabricEnabled = false;
     public static final boolean parseEnabled = true;
     public static final boolean parsePushes = true;
+
+    /**
+     * Used to upload data that is hardcoded at app start to Parse.com - use if Parse table is empty.
+     */
+    public static final boolean parseUploadHardcodedData = false;
+
     public static final boolean uploadOnline = false;
     public static final boolean writeFile = false;
     public static final boolean showNotificationProgress = false;

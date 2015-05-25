@@ -1,7 +1,5 @@
 package pl.warszawa.gdg.metrodatacollector.data;
 
-import android.util.Log;
-
 import com.parse.FindCallback;
 import com.parse.ParseException;
 import com.parse.ParseObject;
@@ -68,12 +66,50 @@ public class ParseHelper {
                         } else {
                             addCellIdParseObject(list, Station.PARSE_OTHER, cellId);
                         }
-                        list.get(0).saveInBackground();
-                        Log.d(TAG, "done is first");
                     }
                 }
             }
         });
+    }
+
+    /**
+     * Used for adding and/or update of Station object in Parse to prevent duplicates
+     * @param station
+     */
+    public static void updateStation(ParseObject station) {
+        if(station == null) {
+            return;
+        }
+        updateStation(getStation(station));
+    }
+
+    /**
+     * Used for adding and/or update of Station object in Parse to prevent duplicates
+     * @param station
+     */
+    public static void updateStation(final Station station) {
+        if(station == null) {
+            return;
+        }
+        /*ParseObject parseObject = station.getParseObject();
+        try {
+            parseObject.save();
+        } catch (ParseException e) {
+            Log.d(TAG, "updateStation error while saving: " + e.getLocalizedMessage());
+        }*/
+
+        /*getStation(station.getName(), new FindCallback<ParseObject>() {
+            @Override
+            public void done(List<ParseObject> list, ParseException e) {
+                ParseObject parseObject = station.getParseObject();
+                if (list != null && list.size() > 0) {
+                    if (list.get(0) != null) {
+                        parseObject.setObjectId(list.get(0).getObjectId());
+                    }
+                }
+                parseObject.saveInBackground();
+            }
+        });*/
     }
 
     private static void addCellIdParseObject(List<ParseObject> list, String arrayName, String cellId) {
@@ -82,7 +118,9 @@ public class ParseHelper {
             ids = new ArrayList<String>();
         }
         ids.add(cellId);
-        list.get(0).addAllUnique(arrayName, ids);
+        ParseObject parseObject = list.get(0);
+        parseObject.addAllUnique(arrayName, ids);
+        parseObject.saveInBackground();
     }
 
     public static Station getStation(ParseObject parseObject) {
@@ -90,8 +128,9 @@ public class ParseHelper {
             return null;
         }
 
-        Station station = new Station(new Station.Builder(parseObject.getString(Station.PARSE_NAME)));
+        Station station = new Station(new Station.Builder(parseObject.getObjectId()));
 
+        //Inside cellids
         if(parseObject.getList(Station.PARSE_PLAY) != null) {
             station.setCellIdsPlay(parseObject.getList(Station.PARSE_PLAY).toArray(new String[parseObject.getList(Station.PARSE_PLAY).size()]));
         }
@@ -107,10 +146,27 @@ public class ParseHelper {
         if(parseObject.getList(Station.PARSE_ORANGE) != null) {
             station.setCellIdsOrange(parseObject.getList(Station.PARSE_ORANGE).toArray(new String[parseObject.getList(Station.PARSE_ORANGE).size()]));
         }
+        //Outside cellids
+        if(parseObject.getList(Station.PARSE_ORANGE_OUTSIDE) != null) {
+            station.setCellIdsOutsideOrange(parseObject.getList(Station.PARSE_ORANGE_OUTSIDE).toArray(new String[parseObject.getList(Station.PARSE_ORANGE_OUTSIDE).size()]));
+        }
+        if(parseObject.getList(Station.PARSE_PLUS_OUTSIDE) != null) {
+            station.setCellIdsOutsidePlus(parseObject.getList(Station.PARSE_PLUS_OUTSIDE).toArray(new String[parseObject.getList(Station.PARSE_PLUS_OUTSIDE).size()]));
+        }
+        if(parseObject.getList(Station.PARSE_OTHER_OUTSIDE) != null) {
+            station.setCellIdsOutsideOther(parseObject.getList(Station.PARSE_OTHER_OUTSIDE).toArray(new String[parseObject.getList(Station.PARSE_OTHER_OUTSIDE).size()]));
+        }
+        if(parseObject.getList(Station.PARSE_TMOBILE_OUTSIDE) != null) {
+            station.setCellIdsOutsideTmobile(parseObject.getList(Station.PARSE_TMOBILE_OUTSIDE).toArray(new String[parseObject.getList(Station.PARSE_TMOBILE_OUTSIDE).size()]));
+        }
+        if(parseObject.getList(Station.PARSE_PLAY_OUTSIDE) != null) {
+            station.setCellIdsOutsidePlay(parseObject.getList(Station.PARSE_PLAY_OUTSIDE).toArray(new String[parseObject.getList(Station.PARSE_PLAY_OUTSIDE).size()]));
+        }
 
+        station.setSeparatedPlatforms(parseObject.getBoolean(Station.PARSE_PLATFORMS));
         station.setDistanceInMeters(parseObject.getInt(Station.PARSE_DISTANCE_METERS));
         station.setDistanceInSeconds(parseObject.getInt(Station.PARSE_DISTANCE_SECONDS));
-        
+
         return station;
     }
 }

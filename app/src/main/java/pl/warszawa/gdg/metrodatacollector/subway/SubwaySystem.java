@@ -1,14 +1,8 @@
 package pl.warszawa.gdg.metrodatacollector.subway;
 
-import android.util.Log;
-
-import com.parse.FindCallback;
-import com.parse.ParseException;
-import com.parse.ParseObject;
-import com.parse.ParseQuery;
-
 import java.util.ArrayList;
-import java.util.List;
+
+import pl.warszawa.gdg.metrodatacollector.FlagsLocal;
 
 
 public class SubwaySystem {
@@ -19,6 +13,9 @@ public class SubwaySystem {
         setLines();
     }
 
+    /**
+     * To init offline data that is hardcoded, and in addElement update or create object in Parse
+     */
     private void setLines() {
         SubwayLine subwayOne = new SubwayLine();
         SubwayLine subwayTwo = new SubwayLine();
@@ -27,8 +24,10 @@ public class SubwaySystem {
         lines.add(subwayOne);
 
         ArrayList<SubwayLine> m1 = new ArrayList<>();
+        ArrayList<SubwayLine> m2 = new ArrayList<>();
         ArrayList<SubwayLine> m1m2 = new ArrayList<>();
         m1.add(subwayOne);
+        m2.add(subwayTwo);
         m1m2.add(subwayOne);
         m1m2.add(subwayTwo);
 
@@ -102,6 +101,74 @@ public class SubwaySystem {
         addElement(subwayOne, new Track());
         addElement(subwayOne, new Station(new Station.Builder("KABATY", m1)));
 
+        addElement(subwayTwo, new Station(new Station.Builder("RONDO_DASZYNSKIEGO", m2)
+                .gsmInsidePlay(new String[]{})
+                .gsmInsideOther(new String[]{})
+                .gsmInsideTmobile(new String[]{})
+                .gsmInsidePlus(new String[]{})
+                .gsmInsideOrange(new String[]{})
+                .gsmOutsideOrange(new String[]{})
+                .gsmOutsideOther(new String[]{})
+                .gsmOutsidePlay(new String[]{})
+                .gsmOutsidePlus(new String[]{})
+                .gsmOutsideTmobile(new String[]{})
+                .separatedPlatforms(false)));
+        addElement(subwayTwo, new Station(new Station.Builder("RONDO_ONZ", m2)
+                .gsmInsidePlay(new String[]{})
+                .gsmInsideOther(new String[]{})
+                .gsmInsideTmobile(new String[]{})
+                .gsmInsidePlus(new String[]{})
+                .gsmInsideOrange(new String[]{})
+                .gsmOutsideOrange(new String[]{})
+                .gsmOutsideOther(new String[]{})
+                .gsmOutsidePlay(new String[]{})
+                .gsmOutsidePlus(new String[]{})
+                .gsmOutsideTmobile(new String[]{})));
+        addElement(subwayTwo, new Station(new Station.Builder("NOWY_SWIAT_UNIWERSYTET", m2)
+                .gsmInsidePlay(new String[]{})
+                .gsmInsideOther(new String[]{})
+                .gsmInsideTmobile(new String[]{})
+                .gsmInsidePlus(new String[]{})
+                .gsmInsideOrange(new String[]{})
+                .gsmOutsideOrange(new String[]{})
+                .gsmOutsideOther(new String[]{})
+                .gsmOutsidePlay(new String[]{})
+                .gsmOutsidePlus(new String[]{})
+                .gsmOutsideTmobile(new String[]{})));
+        addElement(subwayTwo, new Station(new Station.Builder("CENTRUM_NAUKI_KOPERNIK", m2)
+                .gsmInsidePlay(new String[]{})
+                .gsmInsideOther(new String[]{})
+                .gsmInsideTmobile(new String[]{})
+                .gsmInsidePlus(new String[]{})
+                .gsmInsideOrange(new String[]{})
+                .gsmOutsideOrange(new String[]{})
+                .gsmOutsideOther(new String[]{})
+                .gsmOutsidePlay(new String[]{})
+                .gsmOutsidePlus(new String[]{})
+                .gsmOutsideTmobile(new String[]{})));
+        addElement(subwayTwo, new Station(new Station.Builder("STADION_NARODOWY", m2)
+                .gsmInsidePlay(new String[]{})
+                .gsmInsideOther(new String[]{})
+                .gsmInsideTmobile(new String[]{})
+                .gsmInsidePlus(new String[]{})
+                .gsmInsideOrange(new String[]{})
+                .gsmOutsideOrange(new String[]{})
+                .gsmOutsideOther(new String[]{})
+                .gsmOutsidePlay(new String[]{})
+                .gsmOutsidePlus(new String[]{})
+                .gsmOutsideTmobile(new String[]{})));
+        addElement(subwayTwo, new Station(new Station.Builder("DWORZEC_WILENSKI", m2)
+                .gsmInsidePlay(new String[]{})
+                .gsmInsideOther(new String[]{})
+                .gsmInsideTmobile(new String[]{})
+                .gsmInsidePlus(new String[]{})
+                .gsmInsideOrange(new String[]{})
+                .gsmOutsideOrange(new String[]{})
+                .gsmOutsideOther(new String[]{})
+                .gsmOutsidePlay(new String[]{})
+                .gsmOutsidePlus(new String[]{})
+                .gsmOutsideTmobile(new String[]{})));
+
         //TODO add some id for order stations in particular lines - problem with more than one line
         for(Station station : stations) {
             subwayOne.addStation(station);
@@ -113,14 +180,19 @@ public class SubwaySystem {
     private void addElement(SubwayLine subwayLine, final MapElement element) {
         if(element instanceof Station) {
             stations.add((Station)element);
-            subwayLine.addStation((Station)element);
+            subwayLine.addStation((Station) element);
+            if(FlagsLocal.parseUploadHardcodedData) {
+                ((Station) element).updateParse();
+            }
         } else if (element instanceof Track) {
             subwayLine.addMapElemnent(element);
         }
 
-        if(element.getParseObject() != null) {
+
+        /*if(element.getParseObject() != null) {
+            ParseHelper.updateStation((Station)element);
             ParseQuery<ParseObject> query = ParseQuery.getQuery("SubwayStation");
-            query.whereEqualTo(Station.PARSE_NAME, ((Station) element).getName());
+            query.whereEqualTo("objectId", ((Station) element).getName());
             query.findInBackground(new FindCallback<ParseObject>() {
                 public void done(List<ParseObject> scoreList, ParseException e) {
                     if (e == null) {
@@ -128,14 +200,18 @@ public class SubwaySystem {
                         if(scoreList != null && scoreList.size() >= 1) {
                             //it
                         } else {
-                            element.getParseObject().saveInBackground();
+                            try {
+                                element.getParseObject().save();
+                            } catch (ParseException e1) {
+                                Log.d(SubwaySystem.class.getSimpleName(), "done error while saving parse object: " + e1.getLocalizedMessage());
+                            }
                         }
                     } else {
                         Log.d("score", "Error: " + e.getMessage());
                     }
                 }
             });
-        }
+        }*/
     }
 
     public Track getTrackBetween(Station subwayStation, Station subwayStationTwo) {

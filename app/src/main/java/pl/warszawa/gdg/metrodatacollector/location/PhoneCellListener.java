@@ -8,11 +8,17 @@ import android.telephony.SignalStrength;
 import android.telephony.TelephonyManager;
 import android.util.Log;
 
+import com.parse.FindCallback;
+import com.parse.ParseException;
+import com.parse.ParseObject;
+
 import java.util.List;
 
 import de.greenrobot.event.EventBus;
 import pl.warszawa.gdg.metrodatacollector.AppMetroDataCollector;
 import pl.warszawa.gdg.metrodatacollector.FlagsLocal;
+import pl.warszawa.gdg.metrodatacollector.data.ParseHelper;
+import pl.warszawa.gdg.metrodatacollector.subway.Station;
 import pl.warszawa.gdg.metrodatacollector.ui.NotificationHelper;
 
 public class PhoneCellListener extends PhoneStateListener {
@@ -53,19 +59,40 @@ public class PhoneCellListener extends PhoneStateListener {
         }
     }
 
-    private void gsmTowerChanged(TowerInfo tower, TowerInfo prevTower, TelephonyManager telephonyManager, List<CellInfo> cells){
+    private void gsmTowerChanged(final TowerInfo tower, TowerInfo prevTower, TelephonyManager telephonyManager, List<CellInfo> cells){
         if(prevTower != null && tower != null) {
             Log.d(TAG, "gsmTowerChanged from: " + prevTower.getUniqueId() + ", to: " + tower.getUniqueId());
         }
         if(FlagsLocal.useWifi) {
-            List<ScanResult> wifiNetworks = NetworkLocation.getAllWifi(context).getScanResults();
+            try {
+                List<ScanResult> wifiNetworks = NetworkLocation.getAllWifi(context).getScanResults();
+            } catch (Exception e) {
+                //TODO Handle it
+            }
         }
         EventBus.getDefault().post(tower);
 
-        //Check if we know towerId
-        //If not ask to add place
         if(FlagsLocal.showNotificationInfo) {
-            NotificationHelper.showNotification(3333, "Metro Data Collector", "Cell id: " + tower.getUniqueId(), context);
+            //TODO first check offline then if not found check online - and update offline storage (?)
+            //Check if we know towerId
+            //If not ask to add place
+            ParseHelper.getStation(tower.getUniqueId(), tower.getMnc(), new FindCallback<ParseObject>() {
+                @Override
+                public void done(List<ParseObject> list, ParseException e) {
+                    if (list != null && list.size() > 0 && list.get(0) != null) {
+                        Station station = ParseHelper.getStation(list.get(0));
+                        if (station != null && station.getName() != null) {
+                            NotificationHelper.showNotification(2341, station.getName(), "Your current location.", context);
+                        } else {
+                            //Place not known, lets ask to add it
+                            NotificationHelper.showNotificationNewPlace(tower.getUniqueId(), context);
+                        }
+                    } else {
+                        //Place not known, lets ask to add it
+                        NotificationHelper.showNotificationNewPlace(tower.getUniqueId(), context);
+                    }
+                }
+            });
         }
     }
 
