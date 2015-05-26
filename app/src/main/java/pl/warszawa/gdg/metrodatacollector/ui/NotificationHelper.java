@@ -34,6 +34,9 @@ public class NotificationHelper {
         intent.setFlags(Intent.FLAG_ACTIVITY_CLEAR_TOP);
         PendingIntent pendingIntent = PendingIntent.getActivity(context, 0, intent, 0);
 
+        intent.setAction(ActivityAddNewPoint.STOP_LISTENING);
+        PendingIntent pendingStopIntent = PendingIntent.getActivity(context, 0, intent, 0);
+
 
         NotificationCompat.Builder mBuilder =
                 new NotificationCompat.Builder(context)
@@ -41,7 +44,8 @@ public class NotificationHelper {
                         .setAutoCancel(true)
                         .setContentTitle("Unknown place")
                         .setContentText("New cell id detected: " + cellId)
-                .addAction(new NotificationCompat.Action(R.mipmap.ic_launcher, "Add place", pendingIntent));
+                .addAction(new NotificationCompat.Action(R.mipmap.ic_launcher, "Add", pendingIntent))
+                .addAction(new NotificationCompat.Action(R.mipmap.ic_launcher, "Exit", pendingStopIntent));
         getNotificationManager(context).notify(4362, mBuilder.build());
     }
 

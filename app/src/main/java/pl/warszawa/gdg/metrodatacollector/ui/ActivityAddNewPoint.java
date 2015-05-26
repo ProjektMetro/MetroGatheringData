@@ -1,6 +1,7 @@
 package pl.warszawa.gdg.metrodatacollector.ui;
 
 import android.content.Context;
+import android.content.Intent;
 import android.os.Build;
 import android.os.Bundle;
 import android.support.v7.app.AppCompatActivity;
@@ -14,6 +15,7 @@ import android.telephony.CellInfoGsm;
 import android.telephony.CellInfoLte;
 import android.telephony.CellInfoWcdma;
 import android.telephony.NeighboringCellInfo;
+import android.telephony.PhoneStateListener;
 import android.telephony.TelephonyManager;
 import android.telephony.gsm.GsmCellLocation;
 import android.view.Gravity;
@@ -40,16 +42,19 @@ import com.parse.FindCallback;
 import com.parse.ParseException;
 import com.parse.ParseObject;
 
+import java.util.ArrayList;
 import java.util.List;
 
 import butterknife.ButterKnife;
 import butterknife.InjectView;
 import butterknife.OnTextChanged;
+import pl.warszawa.gdg.metrodatacollector.AppMetroDataCollector;
 import pl.warszawa.gdg.metrodatacollector.R;
 import pl.warszawa.gdg.metrodatacollector.data.ParseHelper;
-import pl.warszawa.gdg.metrodatacollector.subway.Station;
+import pl.warszawa.gdg.metrodatacollector.location.PhoneCellListener;
 
 public class ActivityAddNewPoint extends AppCompatActivity {
+
 
     @InjectView(R.id.textViewSelectStation)
     AutoCompleteTextView selectStation;
@@ -64,6 +69,8 @@ public class ActivityAddNewPoint extends AppCompatActivity {
     private List<String> stationList;
     private TelephonyManager telephonyManager;
 
+    public static final String STOP_LISTENING = "Stop_listening";
+
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
@@ -71,6 +78,7 @@ public class ActivityAddNewPoint extends AppCompatActivity {
         NotificationHelper.hideNotificationNewPlace(ActivityAddNewPoint.this);
 
         ButterKnife.inject(this);
+        onNewIntent(getIntent());
         telephonyManager = (TelephonyManager) getSystemService(Context.TELEPHONY_SERVICE);
 
         setupMetroStationList();
@@ -82,17 +90,11 @@ public class ActivityAddNewPoint extends AppCompatActivity {
         ParseHelper.getAllStations(new FindCallback<ParseObject>() {
             @Override
             public void done(List<ParseObject> list, ParseException e) {
-                List<String> stationList = getStationListFromResponse(list);
+                List<String> stationList = new ArrayList<String>();
+                for (ParseObject parseObject : list) {
+                    stationList.add(ParseHelper.getStation(parseObject).getName());
+                }
                 setupStationList(stationList);
-            }
-
-            private List<String> getStationListFromResponse(List<ParseObject> list) {
-                return Lists.transform(list, new Function<ParseObject, String>() {
-                    @Override
-                    public String apply(ParseObject input) {
-                        return input.get(Station.PARSE_NAME).toString();
-                    }
-                });
             }
         });
     }
@@ -320,6 +322,17 @@ public class ActivityAddNewPoint extends AppCompatActivity {
                     filtered.addAll((List) results.values);
                 }
                 notifyDataSetChanged();
+            }
+        }
+    }
+    @Override
+    public void onNewIntent(Intent intent){
+        String action = intent.getAction();
+        if(action != null){
+            if(STOP_LISTENING.equals(action)) {
+                PhoneCellListener phoneCellListener = new PhoneCellListener(ActivityAddNewPoint.this);
+                AppMetroDataCollector.telephonyManager.listen(phoneCellListener, PhoneStateListener.LISTEN_NONE);
+                finish();
             }
         }
     }

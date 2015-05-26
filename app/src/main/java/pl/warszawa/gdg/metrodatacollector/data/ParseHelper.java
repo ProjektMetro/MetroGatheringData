@@ -1,5 +1,7 @@
 package pl.warszawa.gdg.metrodatacollector.data;
 
+import android.util.Log;
+
 import com.parse.FindCallback;
 import com.parse.ParseException;
 import com.parse.ParseObject;
@@ -14,18 +16,78 @@ import pl.warszawa.gdg.metrodatacollector.subway.Station;
  * Created by Michal Tajchert on 2015-05-14.
  */
 public class ParseHelper {
-    private static final String TAG = "ParseHelper";
+    private static final String TAG = ParseHelper.class.getSimpleName();
     //TODO local queries first and if no results online one.
 
-    public static void getAllStations(FindCallback<ParseObject> findCallback) {
+    /**
+     * Delete all local objects, then retreive new ones from Parse. Used only when you really need latest objects - to limit number of requests.
+     */
+    public static void updateLocalStations() {
         ParseQuery<ParseObject> query = ParseQuery.getQuery(Station.PARSE_CLASS_STATION);
+        query.fromLocalDatastore();
+        query.findInBackground(new FindCallback<ParseObject>() {
+            @Override
+            public void done(List<ParseObject> list, ParseException e) {
+                if(e != null) {
+                    Log.d(TAG, "done local with error: " + e.getLocalizedMessage());
+                    return;
+                }
+                for(ParseObject parseObject : list) {
+                    try {
+                        parseObject.unpin();
+                    } catch (ParseException e1) {
+                        Log.d(TAG, "updateLocalStations error while unpinning station: " + e1.getLocalizedMessage());
+                    }
+                }
+                ParseQuery<ParseObject> innerQuery = ParseQuery.getQuery(Station.PARSE_CLASS_STATION);
+                innerQuery.findInBackground(new FindCallback<ParseObject>() {
+                    @Override
+                    public void done(List<ParseObject> list, ParseException e) {
+                        if(e != null) {
+                            Log.d(TAG, "done with error: " + e.getLocalizedMessage());
+                            return;
+                        }
+                        for(ParseObject parseObject : list) {
+                            parseObject.pinInBackground();
+                        }
+                    }
+                });
+            }
+        });
+    }
+
+    public static void getAllStations(FindCallback<ParseObject> findCallback) {
+        getAllStations(findCallback, true);
+    }
+
+    public static void getAllStations(FindCallback<ParseObject> findCallback, boolean local) {
+        ParseQuery<ParseObject> query = ParseQuery.getQuery(Station.PARSE_CLASS_STATION);
+        if(local) {
+            query.fromLocalDatastore();
+        }
         query.findInBackground(findCallback);
     }
 
-    public static void getStation(String name, FindCallback findCallback) {
-        ParseQuery<ParseObject> query = ParseQuery.getQuery(Station.PARSE_CLASS_STATION);
+    public static void getStation(final String name, final FindCallback findCallback) {
+        final ParseQuery<ParseObject> query = ParseQuery.getQuery(Station.PARSE_CLASS_STATION);
         query.whereEqualTo(Station.PARSE_NAME, (name));
-        query.findInBackground(findCallback);
+        query.fromLocalDatastore();
+        query.findInBackground(new FindCallback<ParseObject>() {
+            @Override
+            public void done(List<ParseObject> list, ParseException e) {
+                if (e != null || list == null || list.size() == 0) {
+                    //Not found in local storage
+                    //Refresh local storage and try again
+                    updateLocalStations();
+                    ParseQuery<ParseObject> queryRefreshed = ParseQuery.getQuery(Station.PARSE_CLASS_STATION);
+                    queryRefreshed.whereEqualTo(Station.PARSE_NAME, (name));
+                    queryRefreshed.fromLocalDatastore();
+                    queryRefreshed.findInBackground(findCallback);
+                } else {
+                    query.findInBackground(findCallback);
+                }
+            }
+        });
     }
 
     public static void getStation(String cellId, int mnc, FindCallback findCallback) {
@@ -72,46 +134,6 @@ public class ParseHelper {
         });
     }
 
-    /**
-     * Used for adding and/or update of Station object in Parse to prevent duplicates
-     * @param station
-     */
-    public static void updateStation(ParseObject station) {
-        if(station == null) {
-            return;
-        }
-        updateStation(getStation(station));
-    }
-
-    /**
-     * Used for adding and/or update of Station object in Parse to prevent duplicates
-     * @param station
-     */
-    public static void updateStation(final Station station) {
-        if(station == null) {
-            return;
-        }
-        /*ParseObject parseObject = station.getParseObject();
-        try {
-            parseObject.save();
-        } catch (ParseException e) {
-            Log.d(TAG, "updateStation error while saving: " + e.getLocalizedMessage());
-        }*/
-
-        /*getStation(station.getName(), new FindCallback<ParseObject>() {
-            @Override
-            public void done(List<ParseObject> list, ParseException e) {
-                ParseObject parseObject = station.getParseObject();
-                if (list != null && list.size() > 0) {
-                    if (list.get(0) != null) {
-                        parseObject.setObjectId(list.get(0).getObjectId());
-                    }
-                }
-                parseObject.saveInBackground();
-            }
-        });*/
-    }
-
     private static void addCellIdParseObject(List<ParseObject> list, String arrayName, String cellId) {
         ArrayList<String> ids = (ArrayList) list.get(0).get(arrayName);
         if(ids == null) {
@@ -128,7 +150,7 @@ public class ParseHelper {
             return null;
         }
 
-        Station station = new Station(new Station.Builder(parseObject.getObjectId()));
+        Station station = new Station(new Station.Builder((parseObject.getString(Station.PARSE_NAME))));
 
         //Inside cellids
         if(parseObject.getList(Station.PARSE_PLAY) != null) {
