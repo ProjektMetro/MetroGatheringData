@@ -18,6 +18,7 @@ import de.greenrobot.event.EventBus;
 import pl.warszawa.gdg.metrodatacollector.AppMetroDataCollector;
 import pl.warszawa.gdg.metrodatacollector.FlagsLocal;
 import pl.warszawa.gdg.metrodatacollector.data.ParseHelper;
+import pl.warszawa.gdg.metrodatacollector.subway.MapElement;
 import pl.warszawa.gdg.metrodatacollector.subway.Station;
 import pl.warszawa.gdg.metrodatacollector.ui.NotificationHelper;
 
@@ -26,7 +27,12 @@ public class PhoneCellListener extends PhoneStateListener {
     private static final long TIME_BETWEENMEASURES = 4000;
     private static long prevMeasurement;
     private Context context;
-    private TowerInfo prevTower;
+
+    private static TowerInfo prevTower;
+    /**
+     * As only info about prevTower is not enough (can switch 2g->3g in same place)
+     */
+    private static MapElement prevMapElement;
 
     public PhoneCellListener(Context context) {
         this.context = context;
@@ -82,7 +88,12 @@ public class PhoneCellListener extends PhoneStateListener {
                     if (list != null && list.size() > 0 && list.get(0) != null) {
                         Station station = ParseHelper.getStation(list.get(0));
                         if (station != null && station.getName() != null) {
-                            NotificationHelper.showNotification(2341, station.getName(), "Your current location.", context);
+                            //check if place has actually changed - as can be 2g->3g in same place
+                            if(!station.equals(prevMapElement)) {
+                                //We checked if we are at same place but on different cellId
+                                prevMapElement = station;
+                                NotificationHelper.showNotification(2341, station.getName(), "Your current location.", context);
+                            }
                         } else {
                             //Place not known, lets ask to add it
                             NotificationHelper.showNotificationNewPlace(tower.getUniqueId(), context);
@@ -118,5 +129,14 @@ public class PhoneCellListener extends PhoneStateListener {
         TowerInfo tower = NetworkLocation.findConnectedTower(cells);
         tower.setNetworkType(telephonyManager.getNetworkType());
 
+    }
+
+    /**
+     * Used to deleted previous locations - TowerInfo and MapElement
+     */
+    public static void reset() {
+        PhoneCellListener.prevMapElement = null;
+        PhoneCellListener.prevTower = null;
+        PhoneCellListener.prevMeasurement = 0;
     }
 }

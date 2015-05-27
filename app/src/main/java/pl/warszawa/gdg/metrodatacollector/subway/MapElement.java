@@ -90,4 +90,10 @@ public class MapElement {
     public void setCellIdsOrange(String[] cellIdsOrange) {
         this.cellIdsOrange = cellIdsOrange;
     }
+
+    @Override
+    public boolean equals(Object o) {
+        //TODO compare all arrays of cellIds
+        return false;
+    }
 }

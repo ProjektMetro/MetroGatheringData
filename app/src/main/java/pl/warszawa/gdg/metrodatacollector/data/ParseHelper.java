@@ -20,35 +20,52 @@ public class ParseHelper {
     //TODO local queries first and if no results online one.
 
     /**
-     * Delete all local objects, then retreive new ones from Parse. Used only when you really need latest objects - to limit number of requests.
+     * Delete all local objects, then retrieve new ones from Parse. Used only when you really need latest objects - to limit number of requests.
      */
     public static void updateLocalStations() {
+        updateLocalStations(null);
+    }
+
+    /**
+     * Delete all local objects, then retrieve new ones from Parse. Used only when you really need latest objects - to limit number of requests.
+     * @param parseUpdateCallback
+     */
+    public static void updateLocalStations(final ParseUpdateCallback parseUpdateCallback) {
+        Log.d(TAG, "updateLocalStations start");
         ParseQuery<ParseObject> query = ParseQuery.getQuery(Station.PARSE_CLASS_STATION);
         query.fromLocalDatastore();
         query.findInBackground(new FindCallback<ParseObject>() {
             @Override
             public void done(List<ParseObject> list, ParseException e) {
-                if(e != null) {
+                //Get all stations from local storage and unpin them to stop keeping them offline
+                if (e != null) {
                     Log.d(TAG, "done local with error: " + e.getLocalizedMessage());
-                    return;
-                }
-                for(ParseObject parseObject : list) {
-                    try {
-                        parseObject.unpin();
-                    } catch (ParseException e1) {
-                        Log.d(TAG, "updateLocalStations error while unpinning station: " + e1.getLocalizedMessage());
+                } else if (list != null && list.size() > 0) {
+                    for (ParseObject parseObject : list) {
+                        try {
+                            parseObject.unpin();
+                        } catch (ParseException e1) {
+                            Log.d(TAG, "updateLocalStations error while unpinning station: " + e1.getLocalizedMessage());
+                        }
                     }
                 }
+                //Get all stations from remote server and pin them
                 ParseQuery<ParseObject> innerQuery = ParseQuery.getQuery(Station.PARSE_CLASS_STATION);
                 innerQuery.findInBackground(new FindCallback<ParseObject>() {
                     @Override
                     public void done(List<ParseObject> list, ParseException e) {
-                        if(e != null) {
+                        if (e != null) {
                             Log.d(TAG, "done with error: " + e.getLocalizedMessage());
+                            if (parseUpdateCallback != null) {
+                                parseUpdateCallback.failure(e);
+                            }
                             return;
                         }
-                        for(ParseObject parseObject : list) {
+                        for (ParseObject parseObject : list) {
                             parseObject.pinInBackground();
+                        }
+                        if (parseUpdateCallback != null) {
+                            parseUpdateCallback.success();
                         }
                     }
                 });
@@ -78,34 +95,76 @@ public class ParseHelper {
                 if (e != null || list == null || list.size() == 0) {
                     //Not found in local storage
                     //Refresh local storage and try again
-                    updateLocalStations();
-                    ParseQuery<ParseObject> queryRefreshed = ParseQuery.getQuery(Station.PARSE_CLASS_STATION);
-                    queryRefreshed.whereEqualTo(Station.PARSE_NAME, (name));
-                    queryRefreshed.fromLocalDatastore();
-                    queryRefreshed.findInBackground(findCallback);
+                    Log.d(TAG, "getStation, station not found in local storage, updating lists of stations");
+                    updateLocalStations(new ParseUpdateCallback() {
+                        @Override
+                        public void success() {
+                            ParseQuery<ParseObject> queryRefreshed = ParseQuery.getQuery(Station.PARSE_CLASS_STATION);
+                            queryRefreshed.whereEqualTo(Station.PARSE_NAME, (name));
+                            queryRefreshed.fromLocalDatastore();
+                            queryRefreshed.findInBackground(findCallback);
+                        }
+
+                        @Override
+                        public void failure(ParseException parseException) {
+                            findCallback.done(null, parseException);
+                        }
+                    });
+
                 } else {
-                    query.findInBackground(findCallback);
+                    findCallback.done(list, e);
                 }
             }
         });
     }
 
-    public static void getStation(String cellId, int mnc, FindCallback findCallback) {
+    public static void getStation(final String cellId, final int mnc, final FindCallback findCallback) {
         List<String> valuesTemp = new ArrayList<>();
         valuesTemp.add(cellId);
-        ParseQuery<ParseObject> query = ParseQuery.getQuery(Station.PARSE_CLASS_STATION);
+        final List<String> finalValuesCellId = valuesTemp;
+        final ParseQuery<ParseObject> query = ParseQuery.getQuery(Station.PARSE_CLASS_STATION);
+        query.fromLocalDatastore();
+        queryFromMnc(mnc, finalValuesCellId, query);
+        query.findInBackground(new FindCallback<ParseObject>() {
+            @Override
+            public void done(List<ParseObject> list, ParseException e) {
+                if (e != null || list == null || list.size() == 0) {
+                    //Not found in local storage
+                    //Refresh local storage and try again
+                    Log.d(TAG, "getStation, station not found in local storage, updating lists of stations");
+                    updateLocalStations(new ParseUpdateCallback() {
+                        @Override
+                        public void success() {
+                            ParseQuery<ParseObject> queryRefreshed = ParseQuery.getQuery(Station.PARSE_CLASS_STATION);
+                            queryFromMnc(mnc, finalValuesCellId, queryRefreshed);
+                            queryRefreshed.fromLocalDatastore();
+                            queryRefreshed.findInBackground(findCallback);
+                        }
+
+                        @Override
+                        public void failure(ParseException parseException) {
+                            findCallback.done(null, parseException);
+                        }
+                    });
+                } else {
+                    findCallback.done(list, e);
+                }
+            }
+        });
+    }
+
+    private static void queryFromMnc(int mnc, List<String> finalValuesCellId, ParseQuery<ParseObject> query) {
         if(mnc == 6 || mnc == 98) {
-            query.whereContainedIn(Station.PARSE_PLAY, valuesTemp);
+            query.whereContainedIn(Station.PARSE_PLAY, finalValuesCellId);
         } else if(mnc == 1) {
-            query.whereContains(Station.PARSE_PLUS, cellId);
+            query.whereContainedIn(Station.PARSE_PLUS, finalValuesCellId);
         } else if(mnc == 3) {
-            query.whereContains(Station.PARSE_ORANGE, cellId);
+            query.whereContainedIn(Station.PARSE_ORANGE, finalValuesCellId);
         } else if(mnc == 2) {
-            query.whereContains(Station.PARSE_TMOBILE, cellId);
+            query.whereContainedIn(Station.PARSE_TMOBILE, finalValuesCellId);
         } else {
-            query.whereContains(Station.PARSE_OTHER, cellId);
+            query.whereContainedIn(Station.PARSE_OTHER, finalValuesCellId);
         }
-        query.findInBackground(findCallback);
     }
 
     public static void addStationCellId(Station station, final String cellId, final int mnc) {

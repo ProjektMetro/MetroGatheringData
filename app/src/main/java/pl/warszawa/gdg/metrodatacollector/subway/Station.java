@@ -322,4 +322,19 @@ public class Station extends MapElement {
             }
         });
     }
+
+    @Override
+    public boolean equals(Object o) {
+        //TODO test me
+        if(o == null) {
+            return false;
+        }
+        if(o instanceof Station) {
+            if(this.getName() == null) {
+                return false;
+            }
+            return this.getName().equals(((Station) o).getName());
+        }
+        return false;
+    }
 }

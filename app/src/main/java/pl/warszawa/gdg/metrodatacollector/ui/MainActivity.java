@@ -73,6 +73,7 @@ public class MainActivity extends AppCompatActivity {
 
     @OnClick(R.id.switchBackgroundState)
     public void changeBackgroundState() {
+        PhoneCellListener.reset();
         FlagsLocal.runBackground = !FlagsLocal.runBackground;
         if(!FlagsLocal.runBackground) {
             registerToCellEvent();

@@ -187,31 +187,6 @@ public class SubwaySystem {
         } else if (element instanceof Track) {
             subwayLine.addMapElemnent(element);
         }
-
-
-        /*if(element.getParseObject() != null) {
-            ParseHelper.updateStation((Station)element);
-            ParseQuery<ParseObject> query = ParseQuery.getQuery("SubwayStation");
-            query.whereEqualTo("objectId", ((Station) element).getName());
-            query.findInBackground(new FindCallback<ParseObject>() {
-                public void done(List<ParseObject> scoreList, ParseException e) {
-                    if (e == null) {
-                        Log.d("score", "Retrieved " + scoreList.size() + " scores");
-                        if(scoreList != null && scoreList.size() >= 1) {
-                            //it
-                        } else {
-                            try {
-                                element.getParseObject().save();
-                            } catch (ParseException e1) {
-                                Log.d(SubwaySystem.class.getSimpleName(), "done error while saving parse object: " + e1.getLocalizedMessage());
-                            }
-                        }
-                    } else {
-                        Log.d("score", "Error: " + e.getMessage());
-                    }
-                }
-            });
-        }*/
     }
 
     public Track getTrackBetween(Station subwayStation, Station subwayStationTwo) {
