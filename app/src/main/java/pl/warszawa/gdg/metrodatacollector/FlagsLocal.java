@@ -1,6 +1,8 @@
 package pl.warszawa.gdg.metrodatacollector;
 
 
+import android.content.SharedPreferences;
+
 public class FlagsLocal {
     public static final boolean fabricEnabled = false;
     public static final boolean parseEnabled = true;
@@ -16,7 +18,21 @@ public class FlagsLocal {
     public static final boolean showNotificationProgress = false;
     public static final boolean showNotificationInfo = true;
 
-    //Dynamic ones - keep in SharedPrefs? //TODO?
-    public static boolean runBackground = true;
+    public static boolean runBackground = false;
     public static boolean useWifi = false;
+
+
+    //Keys for saving to SharedPreferences
+    private static final String PREFS_RUN_BACKGROUND = "PREFS_RUN_BACKGROUND";
+
+    public static void save() {
+        SharedPreferences.Editor editor = AppMetroDataCollector.sharedPreferences.edit();
+        editor.putBoolean(PREFS_RUN_BACKGROUND, runBackground);
+        //TODO... do for all flags
+        editor.apply();
+    }
+
+    public static void read() {
+        //TODO read from SharedPreferences (as in save())
+    }
 }

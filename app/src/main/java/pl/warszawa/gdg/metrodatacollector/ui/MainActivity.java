@@ -3,7 +3,6 @@ package pl.warszawa.gdg.metrodatacollector.ui;
 import android.content.Intent;
 import android.os.Bundle;
 import android.support.v7.app.AppCompatActivity;
-import android.telephony.PhoneStateListener;
 import android.view.Menu;
 import android.view.MenuItem;
 import android.widget.Switch;
@@ -22,7 +21,6 @@ import pl.warszawa.gdg.metrodatacollector.location.TowerInfo;
 
 
 public class MainActivity extends AppCompatActivity {
-    private PhoneCellListener phoneCellListener;
 
     @InjectView(R.id.switchBackgroundState)
     Switch switchBackgroundState;
@@ -37,13 +35,11 @@ public class MainActivity extends AppCompatActivity {
         }
         ButterKnife.inject(this);
         EventBus.getDefault().register(this);
-        phoneCellListener = new PhoneCellListener(MainActivity.this);
     }
 
     @Override
     protected void onDestroy() {
         EventBus.getDefault().unregister(this);
-        AppMetroDataCollector.telephonyManager.listen(phoneCellListener, PhoneStateListener.LISTEN_NONE);
         super.onDestroy();
     }
 
@@ -58,28 +54,27 @@ public class MainActivity extends AppCompatActivity {
     @Override
     protected void onPause() {
         super.onPause();
+        FlagsLocal.save();
         if(!FlagsLocal.runBackground) {
-            unregisterToCellEvent();
+            AppMetroDataCollector.unregisterToCellEvent();
         }
     }
 
-    private void registerToCellEvent() {
-        AppMetroDataCollector.telephonyManager.listen(phoneCellListener, PhoneStateListener.LISTEN_SIGNAL_STRENGTHS);
-    }
-
-    private void unregisterToCellEvent() {
-        AppMetroDataCollector.telephonyManager.listen(phoneCellListener, PhoneStateListener.LISTEN_NONE);
+    @Override
+    protected void onResume() {
+        super.onResume();
+        AppMetroDataCollector.registerToCellEvent();
     }
 
     @OnClick(R.id.switchBackgroundState)
     public void changeBackgroundState() {
         PhoneCellListener.reset();
-        FlagsLocal.runBackground = !FlagsLocal.runBackground;
         if(!FlagsLocal.runBackground) {
-            registerToCellEvent();
+            AppMetroDataCollector.registerToCellEvent();
         } else {
-            unregisterToCellEvent();
+            AppMetroDataCollector.unregisterToCellEvent();
         }
+        FlagsLocal.runBackground = !FlagsLocal.runBackground;
     }
 
     @OnClick(R.id.buttonAddPlace)
