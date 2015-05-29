@@ -16,10 +16,10 @@ public class FlagsLocal {
     public static final boolean uploadOnline = false;
     public static final boolean writeFile = false;
     public static final boolean showNotificationProgress = false;
-    public static final boolean showNotificationInfo = true;
 
     public static boolean runBackground = false;
     public static boolean useWifi = false;
+    public static boolean showNotificationInfo = true;
 
 
     //Keys for saving to SharedPreferences

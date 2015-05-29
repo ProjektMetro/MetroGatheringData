@@ -35,6 +35,9 @@ public class MainActivity extends AppCompatActivity {
         }
         ButterKnife.inject(this);
         EventBus.getDefault().register(this);
+        if(savedInstanceState != null) {
+            //TODO restore previous state
+        }
     }
 
     @Override
@@ -55,26 +58,27 @@ public class MainActivity extends AppCompatActivity {
     protected void onPause() {
         super.onPause();
         FlagsLocal.save();
-        if(!FlagsLocal.runBackground) {
-            AppMetroDataCollector.unregisterToCellEvent();
-        }
     }
 
     @Override
     protected void onResume() {
         super.onResume();
-        AppMetroDataCollector.registerToCellEvent();
     }
 
     @OnClick(R.id.switchBackgroundState)
     public void changeBackgroundState() {
         PhoneCellListener.reset();
+        FlagsLocal.runBackground = !switchBackgroundState.isChecked();
         if(!FlagsLocal.runBackground) {
             AppMetroDataCollector.registerToCellEvent();
         } else {
             AppMetroDataCollector.unregisterToCellEvent();
         }
-        FlagsLocal.runBackground = !FlagsLocal.runBackground;
+    }
+
+    @OnClick(R.id.switchNewPlace)
+    public void changeNewPlaceState() {
+        FlagsLocal.showNotificationInfo = !FlagsLocal.showNotificationInfo;
     }
 
     @OnClick(R.id.buttonAddPlace)

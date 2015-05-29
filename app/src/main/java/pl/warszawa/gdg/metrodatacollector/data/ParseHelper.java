@@ -17,7 +17,8 @@ import pl.warszawa.gdg.metrodatacollector.subway.Station;
  */
 public class ParseHelper {
     private static final String TAG = ParseHelper.class.getSimpleName();
-    //TODO local queries first and if no results online one.
+    private static final long PARSE_UPDATE_INTERVAL = 10000;//10 seconds min between updates of parse objects
+    private static long lastParseUpdate = 0;
 
     /**
      * Delete all local objects, then retrieve new ones from Parse. Used only when you really need latest objects - to limit number of requests.
@@ -51,24 +52,28 @@ public class ParseHelper {
                 }
                 //Get all stations from remote server and pin them
                 ParseQuery<ParseObject> innerQuery = ParseQuery.getQuery(Station.PARSE_CLASS_STATION);
-                innerQuery.findInBackground(new FindCallback<ParseObject>() {
-                    @Override
-                    public void done(List<ParseObject> list, ParseException e) {
-                        if (e != null) {
-                            Log.d(TAG, "done with error: " + e.getLocalizedMessage());
-                            if (parseUpdateCallback != null) {
-                                parseUpdateCallback.failure(e);
+                if (System.currentTimeMillis() - lastParseUpdate > PARSE_UPDATE_INTERVAL) {
+                    Log.d(TAG, "parse update");
+                    innerQuery.findInBackground(new FindCallback<ParseObject>() {
+                        @Override
+                        public void done(List<ParseObject> list, ParseException e) {
+                            if (e != null) {
+                                Log.d(TAG, "done with error: " + e.getLocalizedMessage());
+                                if (parseUpdateCallback != null) {
+                                    parseUpdateCallback.failure(e);
+                                }
+                                return;
                             }
-                            return;
+                            lastParseUpdate = System.currentTimeMillis();
+                            for (ParseObject parseObject : list) {
+                                parseObject.pinInBackground();
+                            }
+                            if (parseUpdateCallback != null) {
+                                parseUpdateCallback.success();
+                            }
                         }
-                        for (ParseObject parseObject : list) {
-                            parseObject.pinInBackground();
-                        }
-                        if (parseUpdateCallback != null) {
-                            parseUpdateCallback.success();
-                        }
-                    }
-                });
+                    });
+                }
             }
         });
     }
@@ -81,6 +86,8 @@ public class ParseHelper {
         ParseQuery<ParseObject> query = ParseQuery.getQuery(Station.PARSE_CLASS_STATION);
         if(local) {
             query.fromLocalDatastore();
+        } else {
+            Log.d(TAG, "parse update");
         }
         query.findInBackground(findCallback);
     }
@@ -95,21 +102,25 @@ public class ParseHelper {
                 if (e != null || list == null || list.size() == 0) {
                     //Not found in local storage
                     //Refresh local storage and try again
-                    Log.d(TAG, "getStation, station not found in local storage, updating lists of stations");
-                    updateLocalStations(new ParseUpdateCallback() {
-                        @Override
-                        public void success() {
-                            ParseQuery<ParseObject> queryRefreshed = ParseQuery.getQuery(Station.PARSE_CLASS_STATION);
-                            queryRefreshed.whereEqualTo(Station.PARSE_NAME, (name));
-                            queryRefreshed.fromLocalDatastore();
-                            queryRefreshed.findInBackground(findCallback);
-                        }
+                    Log.d(TAG, "getStation, station not found in local storage, about to update lists of stations");
+                    if(System.currentTimeMillis() - lastParseUpdate > PARSE_UPDATE_INTERVAL) {
+                        Log.d(TAG, "parse update");
+                        updateLocalStations(new ParseUpdateCallback() {
+                            @Override
+                            public void success() {
+                                lastParseUpdate = System.currentTimeMillis();
+                                ParseQuery<ParseObject> queryRefreshed = ParseQuery.getQuery(Station.PARSE_CLASS_STATION);
+                                queryRefreshed.whereEqualTo(Station.PARSE_NAME, (name));
+                                queryRefreshed.fromLocalDatastore();
+                                queryRefreshed.findInBackground(findCallback);
+                            }
 
-                        @Override
-                        public void failure(ParseException parseException) {
-                            findCallback.done(null, parseException);
-                        }
-                    });
+                            @Override
+                            public void failure(ParseException parseException) {
+                                findCallback.done(null, parseException);
+                            }
+                        });
+                    }
 
                 } else {
                     findCallback.done(list, e);
@@ -131,21 +142,25 @@ public class ParseHelper {
                 if (e != null || list == null || list.size() == 0) {
                     //Not found in local storage
                     //Refresh local storage and try again
-                    Log.d(TAG, "getStation, station not found in local storage, updating lists of stations");
-                    updateLocalStations(new ParseUpdateCallback() {
-                        @Override
-                        public void success() {
-                            ParseQuery<ParseObject> queryRefreshed = ParseQuery.getQuery(Station.PARSE_CLASS_STATION);
-                            queryFromMnc(mnc, finalValuesCellId, queryRefreshed);
-                            queryRefreshed.fromLocalDatastore();
-                            queryRefreshed.findInBackground(findCallback);
-                        }
+                    Log.d(TAG, "getStation, station not found in local storage, , about to update lists of stations");
+                    if(System.currentTimeMillis() - lastParseUpdate > PARSE_UPDATE_INTERVAL) {
+                        Log.d(TAG, "parse update");
+                        updateLocalStations(new ParseUpdateCallback() {
+                            @Override
+                            public void success() {
+                                lastParseUpdate = System.currentTimeMillis();
+                                ParseQuery<ParseObject> queryRefreshed = ParseQuery.getQuery(Station.PARSE_CLASS_STATION);
+                                queryFromMnc(mnc, finalValuesCellId, queryRefreshed);
+                                queryRefreshed.fromLocalDatastore();
+                                queryRefreshed.findInBackground(findCallback);
+                            }
 
-                        @Override
-                        public void failure(ParseException parseException) {
-                            findCallback.done(null, parseException);
-                        }
-                    });
+                            @Override
+                            public void failure(ParseException parseException) {
+                                findCallback.done(null, parseException);
+                            }
+                        });
+                    }
                 } else {
                     findCallback.done(list, e);
                 }

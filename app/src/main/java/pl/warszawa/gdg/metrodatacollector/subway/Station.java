@@ -337,4 +337,11 @@ public class Station extends MapElement {
         }
         return false;
     }
+
+    @Override
+    public String toString() {
+        return "Station{" +
+                "name='" + name + '\'' +
+                '}';
+    }
 }

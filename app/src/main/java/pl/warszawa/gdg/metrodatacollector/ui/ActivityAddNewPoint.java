@@ -327,12 +327,14 @@ public class ActivityAddNewPoint extends AppCompatActivity {
     }
     @Override
     public void onNewIntent(Intent intent){
+        //TODO change this to Broadcast receiver
         String action = intent.getAction();
         if(action != null){
             if(STOP_LISTENING.equals(action)) {
                 PhoneCellListener phoneCellListener = new PhoneCellListener(ActivityAddNewPoint.this);
                 AppMetroDataCollector.telephonyManager.listen(phoneCellListener, PhoneStateListener.LISTEN_NONE);
-                finish();
+                NotificationHelper.hideRunningNotification(ActivityAddNewPoint.this);
+                System.exit(0);//No no pattern
             }
         }
     }
