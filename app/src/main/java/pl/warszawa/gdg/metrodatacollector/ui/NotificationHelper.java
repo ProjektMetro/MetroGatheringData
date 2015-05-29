@@ -7,9 +7,15 @@ import android.content.Intent;
 import android.support.v4.app.NotificationCompat;
 
 import pl.warszawa.gdg.metrodatacollector.R;
+import pl.warszawa.gdg.metrodatacollector.subway.Station;
 
 public class NotificationHelper {
     private static NotificationManager notificationManager;
+
+
+    public static final int NOTIFICATION_UNKNOWN_ID = 23411;
+    public static final int NOTIFICATION_STATION_ID = 23412;
+    public static final int NOTIFICATION_RUNNING_ID = 23413;
 
     public static NotificationManager getNotificationManager(Context context) {
         if(notificationManager == null){
@@ -18,10 +24,24 @@ public class NotificationHelper {
         return notificationManager;
     }
 
+    public static void showStation(Station station, Context context) {
+        if(station == null || station.getName() == null || context == null) {
+            return;
+        }
+        NotificationCompat.Builder mBuilder =
+                new NotificationCompat.Builder(context)
+                        .setSmallIcon(R.drawable.ic_action_directions_subway)
+                        .setAutoCancel(true)
+                        .setContentTitle(station.getName())
+                        .setDefaults(NotificationCompat.DEFAULT_ALL)
+                        .setContentText("Known location.");
+        getNotificationManager(context).notify(NOTIFICATION_STATION_ID, mBuilder.build());
+    }
+
     public static void showNotification(int id, String title, String subtitle, Context context) {
         NotificationCompat.Builder mBuilder =
                 new NotificationCompat.Builder(context)
-                        .setSmallIcon(R.mipmap.ic_launcher)
+                        .setSmallIcon(R.drawable.ic_action_directions_subway)
                         .setAutoCancel(true)
                         .setContentTitle(title)
                         .setDefaults(NotificationCompat.DEFAULT_ALL)
@@ -40,18 +60,18 @@ public class NotificationHelper {
 
         NotificationCompat.Builder mBuilder =
                 new NotificationCompat.Builder(context)
-                        .setSmallIcon(R.mipmap.ic_launcher)
+                        .setSmallIcon(R.drawable.ic_action_directions_subway)
                         .setAutoCancel(true)
                         .setContentTitle("Unknown place")
                         .setContentText("New cell id detected: " + cellId)
                         .setDefaults(NotificationCompat.DEFAULT_ALL)
-                .addAction(new NotificationCompat.Action(R.mipmap.ic_launcher, "Add", pendingIntent))
-                .addAction(new NotificationCompat.Action(R.mipmap.ic_launcher, "Exit", pendingStopIntent));
-        getNotificationManager(context).notify(4362, mBuilder.build());
+                .addAction(new NotificationCompat.Action(R.drawable.ic_action_add, "Add", pendingIntent))
+                .addAction(new NotificationCompat.Action(R.drawable.ic_action_pause, "Exit", pendingStopIntent));
+        getNotificationManager(context).notify(NOTIFICATION_UNKNOWN_ID, mBuilder.build());
     }
 
     public static void hideNotificationNewPlace(Context context) {
-        hideNotification(context, 4362);
+        hideNotification(context, NOTIFICATION_UNKNOWN_ID);
     }
 
     public static void hideNotification(Context context, int notificationId) {
@@ -68,19 +88,23 @@ public class NotificationHelper {
 
             NotificationCompat.Builder mBuilder =
                     new NotificationCompat.Builder(context)
-                            .setSmallIcon(R.mipmap.ic_launcher)
+                            .setSmallIcon(R.drawable.ic_action_directions_subway)
                             .setAutoCancel(false)
                             .setOngoing(true)
                             .setProgress(0, 0, true)
                             .setContentTitle("Gathering data... ")
-                            .addAction(new NotificationCompat.Action(R.mipmap.ic_launcher, "Exit", pendingStopIntent));
+                            .addAction(new NotificationCompat.Action(R.drawable.ic_action_pause, "Exit", pendingStopIntent));
             ;
-            getNotificationManager(context).notify(4455, mBuilder.build());
+            getNotificationManager(context).notify(NOTIFICATION_RUNNING_ID, mBuilder.build());
         }
     }
 
+    public static void hideStationNotification(Context context) {
+        getNotificationManager(context).cancel(NOTIFICATION_STATION_ID);
+    }
+
     public static void hideRunningNotification(Context context) {
-        getNotificationManager(context).cancel(4455);
+        getNotificationManager(context).cancel(NOTIFICATION_RUNNING_ID);
     }
 
     public static boolean isNotificationVisible(Context context, int notificationId) {

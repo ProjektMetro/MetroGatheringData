@@ -25,7 +25,6 @@ import pl.warszawa.gdg.metrodatacollector.ui.NotificationHelper;
 public class PhoneCellListener extends PhoneStateListener {
     private static final String TAG = "PhoneCellListener";
     private static final long TIME_BETWEENMEASURES = 4000;
-    private static final int NOTIFICATION_KNOWN_ID = 2341;
     private static long prevMeasurement;
     private Context context;
 
@@ -96,18 +95,18 @@ public class PhoneCellListener extends PhoneStateListener {
                             if(!station.equals(prevMapElement)) {
                                 //We checked if we are at same place but on different cellId
                                 prevMapElement = station;
-                                NotificationHelper.showNotification(NOTIFICATION_KNOWN_ID, station.getName(), "Your current location.", context);
+                                NotificationHelper.showStation(station, context);
                                 NotificationHelper.hideNotificationNewPlace(context);
                             }
                         } else {
                             //Place not known, lets ask to add it
                             NotificationHelper.showNotificationNewPlace(tower.getUniqueId(), context);
-                            NotificationHelper.hideNotification(context, NOTIFICATION_KNOWN_ID);
+                            NotificationHelper.hideStationNotification(context);
                         }
                     } else {
                         //Place not known, lets ask to add it
                         NotificationHelper.showNotificationNewPlace(tower.getUniqueId(), context);
-                        NotificationHelper.hideNotification(context, NOTIFICATION_KNOWN_ID);
+                        NotificationHelper.hideStationNotification(context);
                     }
                 }
             });
