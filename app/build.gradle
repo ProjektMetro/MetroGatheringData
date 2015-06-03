@@ -44,4 +44,5 @@ dependencies {
         transitive = true;
     }
     compile 'com.google.guava:guava:18.0'
+    compile 'com.google.android.gms:play-services-location:7.5.0'
 }

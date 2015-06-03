@@ -16,6 +16,7 @@
         android:protectionLevel="signature" />
 
     <uses-permission android:name="pl.warszawa.gdg.metrodatacollector.permission.C2D_MESSAGE" />
+    <uses-permission android:name="android.permission.ACCESS_FINE_LOCATION"/>
 
     <application
         android:name=".AppMetroDataCollector"
@@ -32,7 +33,8 @@
                 <category android:name="android.intent.category.LAUNCHER" />
             </intent-filter>
         </activity>
-
+        <!-- GEOFENCING -->
+        <service android:name="pl.warszawa.gdg.metrodatacollector.GeofenceTransitionsIntentService"/>
         <!-- PARSE -->
         <service android:name="com.parse.PushService" />
 
