@@ -1,5 +1,6 @@
 package pl.warszawa.gdg.metrodatacollector.ui;
 
+import android.annotation.TargetApi;
 import android.content.Context;
 import android.content.Intent;
 import android.os.Bundle;
@@ -123,7 +124,9 @@ public class ActivityAddNewPoint extends AppCompatActivity {
 
     private void setupCurrentCell() {
         GsmCellLocation cellLocation = (GsmCellLocation) telephonyManager.getCellLocation();
-        currentCell.setText("" + cellLocation.getCid());
+        if(cellLocation != null) {
+            currentCell.setText("" + cellLocation.getCid());
+        }
     }
 
     private void setupStationList(List<String> stationList) {

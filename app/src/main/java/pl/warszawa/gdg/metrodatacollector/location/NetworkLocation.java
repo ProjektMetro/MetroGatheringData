@@ -1,8 +1,10 @@
 package pl.warszawa.gdg.metrodatacollector.location;
 
+import android.annotation.TargetApi;
 import android.content.Context;
 import android.net.wifi.ScanResult;
 import android.net.wifi.WifiManager;
+import android.os.Build;
 import android.telephony.CellIdentityCdma;
 import android.telephony.CellIdentityGsm;
 import android.telephony.CellIdentityLte;
@@ -35,6 +37,7 @@ public class NetworkLocation {
         return null;
     }
 
+    @TargetApi(Build.VERSION_CODES.JELLY_BEAN_MR1)
     public static TowerInfo getTowerCurrent(Context context) {
         TelephonyManager telephonyManager = (TelephonyManager) context.getSystemService(Context.TELEPHONY_SERVICE);
         TowerInfo connectedTower = findConnectedTower(telephonyManager.getAllCellInfo());
@@ -48,6 +51,7 @@ public class NetworkLocation {
      * @return
      * @throws RuntimeException
      */
+    @TargetApi(Build.VERSION_CODES.JELLY_BEAN_MR1)
     public static ArrayList<TowerInfo> getAllTowers(Context context) throws RuntimeException {
         TelephonyManager telephonyManager = (TelephonyManager) context.getSystemService(Context.TELEPHONY_SERVICE);
 
@@ -128,6 +132,7 @@ public class NetworkLocation {
         }
     }
 
+    @TargetApi(Build.VERSION_CODES.JELLY_BEAN_MR2)
     public static TowerInfo findConnectedTower(List<CellInfo> cells) {
         if(cells == null) {
             return null;

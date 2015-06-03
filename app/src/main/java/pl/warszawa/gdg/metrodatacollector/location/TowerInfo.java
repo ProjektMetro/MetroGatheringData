@@ -1,6 +1,5 @@
 package pl.warszawa.gdg.metrodatacollector.location;
 
-import android.os.Build;
 import android.telephony.CellIdentityCdma;
 import android.telephony.CellIdentityGsm;
 import android.telephony.CellIdentityLte;
@@ -63,6 +62,7 @@ public class TowerInfo {
         this.networkType = TelephonyManager.NETWORK_TYPE_LTE;
     }
 
+    @TargetApi(Build.VERSION_CODES.JELLY_BEAN_MR1)
     public TowerInfo(CellIdentityGsm cellIdentityGsm) {
         this.mcc = cellIdentityGsm.getMcc();
         this.mnc = cellIdentityGsm.getMnc();
@@ -74,6 +74,7 @@ public class TowerInfo {
         //TODO not needed for Warsaw
     }
 
+    @TargetApi(Build.VERSION_CODES.JELLY_BEAN_MR2)
     public TowerInfo(CellIdentityWcdma cellIdentityWcdma) {
         //TODO only API > 18
         this.cid = cellIdentityWcdma.getCid();

@@ -1,7 +1,9 @@
 package pl.warszawa.gdg.metrodatacollector.location;
 
+import android.annotation.TargetApi;
 import android.content.Context;
 import android.net.wifi.ScanResult;
+import android.os.Build;
 import android.telephony.CellInfo;
 import android.telephony.PhoneStateListener;
 import android.telephony.SignalStrength;
@@ -38,6 +40,7 @@ public class PhoneCellListener extends PhoneStateListener {
         this.context = context;
     }
 
+    @TargetApi(Build.VERSION_CODES.JELLY_BEAN_MR1)
     @Override
     public void onSignalStrengthsChanged(SignalStrength signalStrength) {
         super.onSignalStrengthsChanged(signalStrength);
@@ -124,6 +127,7 @@ public class PhoneCellListener extends PhoneStateListener {
      * @param name
      * @param context
      */
+    @TargetApi(Build.VERSION_CODES.JELLY_BEAN_MR1)
     public static void addNewPlace(String name, Context context) {
         if(name == null) {
             name = "Station_" + System.currentTimeMillis()/1000;
