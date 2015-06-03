@@ -89,7 +89,6 @@ public class ActivityAddNewPoint extends AppCompatActivity {
         setupMetroStationList();
         setupCurrentCell();
         setupNeighboringCellList();
-        stationToAdd = new Station();
     }
 
     @Override
@@ -250,6 +249,7 @@ public class ActivityAddNewPoint extends AppCompatActivity {
                 selectStation.setError("Select station from list.");
             } else {
                 //lets try to send it
+                stationToAdd = new Station(selectedStation);
                 if(stationToAdd != null && stationToAdd.getName() != null) {//TODO check if one BTS is set
                     //stationToAdd.updateParse();//and only then send it to Parse
                 }
