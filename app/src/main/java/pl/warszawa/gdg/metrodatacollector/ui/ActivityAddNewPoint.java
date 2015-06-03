@@ -2,18 +2,9 @@ package pl.warszawa.gdg.metrodatacollector.ui;
 
 import android.content.Context;
 import android.content.Intent;
-import android.os.Build;
 import android.os.Bundle;
 import android.support.v7.app.AppCompatActivity;
-import android.telephony.CellIdentityCdma;
-import android.telephony.CellIdentityGsm;
-import android.telephony.CellIdentityLte;
-import android.telephony.CellIdentityWcdma;
 import android.telephony.CellInfo;
-import android.telephony.CellInfoCdma;
-import android.telephony.CellInfoGsm;
-import android.telephony.CellInfoLte;
-import android.telephony.CellInfoWcdma;
 import android.telephony.NeighboringCellInfo;
 import android.telephony.PhoneStateListener;
 import android.telephony.TelephonyManager;
@@ -29,12 +20,12 @@ import android.widget.AdapterView;
 import android.widget.ArrayAdapter;
 import android.widget.AutoCompleteTextView;
 import android.widget.BaseAdapter;
+import android.widget.CheckBox;
 import android.widget.Filter;
 import android.widget.Filterable;
 import android.widget.ListView;
 import android.widget.TextView;
 
-import com.google.common.base.Function;
 import com.google.common.base.Predicate;
 import com.google.common.base.Strings;
 import com.google.common.collect.Iterables;
@@ -69,12 +60,16 @@ public class ActivityAddNewPoint extends AppCompatActivity {
     @InjectView(R.id.currentCell)
     TextView currentCell;
 
+    @InjectView(R.id.checkBoxOutside)
+    CheckBox outside;
+
     private String selectedStation;
     private List<String> stationList;
     private TelephonyManager telephonyManager;
 
     public static final String STOP_LISTENING = "Stop_listening";
     private Station stationToAdd;//Object that user fills information about
+    private List<TowerInfo> neighbouringCells;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -105,6 +100,7 @@ public class ActivityAddNewPoint extends AppCompatActivity {
 
     /**
      * GSM Tower has changed
+     *
      * @param towerInfo
      */
     public void onEvent(TowerInfo towerInfo) {
@@ -137,13 +133,13 @@ public class ActivityAddNewPoint extends AppCompatActivity {
         selectStation.setOnItemClickListener(new AdapterView.OnItemClickListener() {
             @Override
             public void onItemClick(AdapterView<?> parent, View view, int position, long id) {
-                stationItemClicked(position);
+                stationItemClicked(((TextView) view).getText().toString());
             }
         });
     }
 
-    private void stationItemClicked(int position) {
-        selectedStation = stationList.get(position);
+    private void stationItemClicked(String station) {
+        selectedStation = station;
         selectStation.setError(null);
     }
 
@@ -153,72 +149,23 @@ public class ActivityAddNewPoint extends AppCompatActivity {
         header.setText("Neighboring Cells:");
         listViewNeighboringCells.addHeaderView(header);
 
-        List<String> neighborStringList = getNeighbouringCellList();
-        listViewNeighboringCells.setAdapter(new ArrayAdapter<>(this, android.R.layout.simple_list_item_1, neighborStringList));
+        neighbouringCells = getNeighbouringCells();
+        listViewNeighboringCells.setAdapter(new ArrayAdapter<>(this, android.R.layout.simple_list_item_1, neighbouringCells));
     }
 
-    private List<String> getNeighbouringCellList() {
+    private List<TowerInfo> getNeighbouringCells() {
         List<CellInfo> allCellInfo = telephonyManager.getAllCellInfo();
+        List<TowerInfo> result = Lists.newArrayList();
         if (allCellInfo != null && !allCellInfo.isEmpty()) {
-            return transformAllCellInfo(allCellInfo);
+            for (CellInfo cellInfo : allCellInfo) {
+                result.add(TowerInfo.getTowerInfo(cellInfo));
+            }
         } else {
-            return transformNeighboringCellInfo(telephonyManager.getNeighboringCellInfo());
-        }
-    }
-
-    private List<String> transformAllCellInfo(List<CellInfo> allCellInfo) {
-        return Lists.transform(allCellInfo, new Function<CellInfo, String>() {
-            @Override
-            public String apply(CellInfo input) {
-                return getCellDescription(input);
-            }
-        });
-    }
-
-    private String getCellDescription(CellInfo ci) {
-        if (ci instanceof CellInfoLte) {
-            CellIdentityLte cellIdentity = ((CellInfoLte) ci).getCellIdentity();
-            return "LTE" + "\n" +
-                    "Ci: " + cellIdentity.getCi() + "\n" +
-                    "Mnc: " + cellIdentity.getMnc() + "\n" +
-                    "Pci: " + cellIdentity.getPci() + "\n" +
-                    "Tac: " + cellIdentity.getTac();
-        } else if (ci instanceof CellInfoGsm) {
-            CellIdentityGsm cellIdentity = ((CellInfoGsm) ci).getCellIdentity();
-            return "GSM" + "\n" +
-                    "Cid: " + cellIdentity.getCid() + "\n" +
-                    "Mnc: " + cellIdentity.getMnc() + "\n" +
-                    "Lac: " + cellIdentity.getLac();
-        } else if (ci instanceof CellInfoCdma) {
-            CellIdentityCdma cellIdentity = ((CellInfoCdma) ci).getCellIdentity();
-            return "CDMA" + "\n" +
-                    "BaseId: " + cellIdentity.getBasestationId() + "\n" +
-                    "NetworkId: " + cellIdentity.getNetworkId() + "\n" +
-                    "SystemId: " + cellIdentity.getSystemId() + "\n" +
-                    "Latitude: " + cellIdentity.getLatitude() + "\n" +
-                    "Longitude: " + cellIdentity.getLongitude();
-        } else if (ci instanceof CellInfoWcdma) {
-            if (Build.VERSION.SDK_INT > 18) {
-                CellIdentityWcdma cellIdentity = ((CellInfoWcdma) ci).getCellIdentity();
-                return "WCDMA" + "\n" +
-                        "Cid: " + cellIdentity.getCid() + "\n" +
-                        "Mnc: " + cellIdentity.getMnc() + "\n" +
-                        "Lac: " + cellIdentity.getLac();
+            for (NeighboringCellInfo cellInfo : telephonyManager.getNeighboringCellInfo()) {
+                result.add(TowerInfo.getTowerInfo(cellInfo));
             }
         }
-        return "";
-    }
-
-    private List<String> transformNeighboringCellInfo(List<NeighboringCellInfo> neighboringCellInfo) {
-        return Lists.transform(neighboringCellInfo, new Function<NeighboringCellInfo, String>() {
-            @Override
-            public String apply(NeighboringCellInfo input) {
-                return "Cid: " + input.getCid() + "\n" +
-                        "Type: " + input.getNetworkType() + "\n" +
-                        "Psc: " + input.getPsc() + "\n" +
-                        "Rssi: " + input.getRssi();
-            }
-        });
+        return result;
     }
 
     @OnTextChanged(R.id.textViewSelectStation)
@@ -248,18 +195,17 @@ public class ActivityAddNewPoint extends AppCompatActivity {
             if (Strings.isNullOrEmpty(selectedStation)) {
                 selectStation.setError("Select station from list.");
             } else {
-                //lets try to send it
-                stationToAdd = new Station(selectedStation);
-                if(stationToAdd != null && stationToAdd.getName() != null) {//TODO check if one BTS is set
-                    //stationToAdd.updateParse();//and only then send it to Parse
+                Station.Builder builder = new Station.Builder(selectedStation);
+                for (TowerInfo towerInfo : neighbouringCells) {
+                    builder.gsm(towerInfo, outside.isChecked());
                 }
+                builder.build().updateParse();
             }
             return true;
         }
 
         return super.onOptionsItemSelected(item);
     }
-
 
     static class StationAdapter extends BaseAdapter implements Filterable {
         private Context context;

@@ -1,13 +1,25 @@
 package pl.warszawa.gdg.metrodatacollector.location;
 
+import android.os.Build;
 import android.telephony.CellIdentityCdma;
 import android.telephony.CellIdentityGsm;
 import android.telephony.CellIdentityLte;
 import android.telephony.CellIdentityWcdma;
+import android.telephony.CellInfo;
+import android.telephony.CellInfoCdma;
+import android.telephony.CellInfoGsm;
+import android.telephony.CellInfoLte;
+import android.telephony.CellInfoWcdma;
+import android.telephony.NeighboringCellInfo;
 import android.telephony.TelephonyManager;
 import android.util.Log;
 
 public class TowerInfo {
+
+    public enum Type {
+        PLAY, PLUS, ORANGE, T_MOBILE, OTHER;
+    }
+
     private static final String TAG = "TowerInfo";
     private static final int UNKNOWN = -1;
 
@@ -23,6 +35,24 @@ public class TowerInfo {
 
     private int networkType;
     private int signalStrength;
+
+    public static TowerInfo getTowerInfo(CellInfo cellInfo) {
+        if (cellInfo instanceof CellInfoLte) {
+            return new TowerInfo(((CellInfoLte) cellInfo).getCellIdentity());
+        } else if (cellInfo instanceof CellInfoGsm) {
+            return new TowerInfo(((CellInfoGsm) cellInfo).getCellIdentity());
+        } else if (cellInfo instanceof CellInfoCdma) {
+            return new TowerInfo(((CellInfoCdma) cellInfo).getCellIdentity());
+        } else if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.JELLY_BEAN_MR2 && cellInfo instanceof CellInfoWcdma) {
+            return new TowerInfo(((CellInfoWcdma) cellInfo).getCellIdentity());
+        }
+        return null;
+    }
+
+    public static TowerInfo getTowerInfo(NeighboringCellInfo cellInfo) {
+        //TODO: To implement
+        return null;
+    }
 
     public TowerInfo(CellIdentityLte cellIdentityLte) {
         this.mcc = cellIdentityLte.getMcc();
@@ -100,27 +130,40 @@ public class TowerInfo {
         return signalStrength;
     }
 
+    public Type getType() {
+        if (mnc == 6 || mnc == 98) {
+            return Type.PLAY;
+        } else if (mnc == 1) {
+            return Type.PLUS;
+        } else if (mnc == 3) {
+            return Type.ORANGE;
+        } else if (mnc == 2) {
+            return Type.T_MOBILE;
+        } else {
+            return Type.OTHER;
+        }
+    }
+
     /**
      * Get Global Cell Id
      */
     public String getUniqueId() {
-        if(this.networkType == TelephonyManager.NETWORK_TYPE_LTE) {
+        if (this.networkType == TelephonyManager.NETWORK_TYPE_LTE) {
             //LTE
             return String.valueOf(mcc) + String.valueOf(mnc) + String.valueOf(pci) + String.valueOf(ci) + String.valueOf(tac);
         }
-        if(this.networkType == TelephonyManager.NETWORK_TYPE_HSPA || this.networkType == TelephonyManager.NETWORK_TYPE_HSPAP) {
+        if (this.networkType == TelephonyManager.NETWORK_TYPE_HSPA || this.networkType == TelephonyManager.NETWORK_TYPE_HSPAP) {
             //3G
-            return  String.valueOf(mcc) + String.valueOf(mnc) +  String.valueOf(lac) + String.valueOf(cid) + String.valueOf(psc);
+            return String.valueOf(mcc) + String.valueOf(mnc) + String.valueOf(lac) + String.valueOf(cid) + String.valueOf(psc);
         }
-        if(this.networkType == TelephonyManager.NETWORK_TYPE_EDGE) {
+        if (this.networkType == TelephonyManager.NETWORK_TYPE_EDGE) {
             //2G
-            return  String.valueOf(mcc) + String.valueOf(mnc) +  String.valueOf(lac) + String.valueOf(cid);
+            return String.valueOf(mcc) + String.valueOf(mnc) + String.valueOf(lac) + String.valueOf(cid);
         }
 
         //Most likely you shouldn't be here.
         return String.valueOf(mcc) + String.valueOf(mnc) + String.valueOf(lac) + String.valueOf(cid) + String.valueOf(psc);
     }
-
 
 
     @Override
