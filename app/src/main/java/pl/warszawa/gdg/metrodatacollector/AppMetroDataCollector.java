@@ -10,6 +10,7 @@ import com.crashlytics.android.Crashlytics;
 import com.parse.ParseInstallation;
 
 import io.fabric.sdk.android.Fabric;
+import pl.warszawa.gdg.metrodatacollector.data.ParseHelper;
 import pl.warszawa.gdg.metrodatacollector.data.ParseInitOutside;
 import pl.warszawa.gdg.metrodatacollector.location.PhoneCellListener;
 import pl.warszawa.gdg.metrodatacollector.subway.SubwaySystem;
@@ -42,6 +43,7 @@ public class AppMetroDataCollector extends Application{
         phoneCellListener = new PhoneCellListener(AppMetroDataCollector.this);
         subwaySystem = new SubwaySystem();
         telephonyManager = (TelephonyManager) AppMetroDataCollector.this.getSystemService(Context.TELEPHONY_SERVICE);
+        ParseHelper.updateLocalStations();
     }
 
     /**

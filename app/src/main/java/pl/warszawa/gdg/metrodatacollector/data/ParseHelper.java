@@ -10,6 +10,9 @@ import com.parse.ParseQuery;
 import java.util.ArrayList;
 import java.util.List;
 
+import de.greenrobot.event.EventBus;
+import pl.warszawa.gdg.metrodatacollector.data.busEvents.ErrorParse;
+import pl.warszawa.gdg.metrodatacollector.data.busEvents.SuccessParse;
 import pl.warszawa.gdg.metrodatacollector.subway.Station;
 
 /**
@@ -24,7 +27,20 @@ public class ParseHelper {
      * Delete all local objects, then retrieve new ones from Parse. Used only when you really need latest objects - to limit number of requests.
      */
     public static void updateLocalStations() {
-        updateLocalStations(null);
+        updateLocalStations(new ParseUpdateCallback() {
+            @Override
+            public void success(List<ParseObject> list) {
+                Log.d(TAG, "updateLocalStations: success");
+                if(list != null) {
+                    Log.d(TAG, "updateLocalStations: new list size: " + list.size());
+                }
+            }
+
+            @Override
+            public void failure(ParseException parseException) {
+                Log.d(TAG, "updateLocalStations: failure: " + parseException.getLocalizedMessage());
+            }
+        });
     }
 
     /**
@@ -59,6 +75,7 @@ public class ParseHelper {
                         public void done(List<ParseObject> list, ParseException e) {
                             if (e != null) {
                                 Log.d(TAG, "done with error: " + e.getLocalizedMessage());
+                                EventBus.getDefault().post(new ErrorParse(e));
                                 if (parseUpdateCallback != null) {
                                     parseUpdateCallback.failure(e);
                                 }
@@ -68,8 +85,9 @@ public class ParseHelper {
                             for (ParseObject parseObject : list) {
                                 parseObject.pinInBackground();
                             }
+                            EventBus.getDefault().post(new SuccessParse(list));
                             if (parseUpdateCallback != null) {
-                                parseUpdateCallback.success();
+                                parseUpdateCallback.success(list);
                             }
                         }
                     });
