@@ -197,6 +197,8 @@ public class Station extends MapElement {
         return name;
     }
 
+    public Station() {
+    }
 
     public Station(Builder builder) {
         name = builder.name;

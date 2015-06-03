@@ -125,7 +125,7 @@ public class ParseHelper {
                         Log.d(TAG, "parse update");
                         updateLocalStations(new ParseUpdateCallback() {
                             @Override
-                            public void success() {
+                            public void success(List<ParseObject> list) {
                                 lastParseUpdate = System.currentTimeMillis();
                                 ParseQuery<ParseObject> queryRefreshed = ParseQuery.getQuery(Station.PARSE_CLASS_STATION);
                                 queryRefreshed.whereEqualTo(Station.PARSE_NAME, (name));
@@ -165,7 +165,7 @@ public class ParseHelper {
                         Log.d(TAG, "parse update");
                         updateLocalStations(new ParseUpdateCallback() {
                             @Override
-                            public void success() {
+                            public void success(List<ParseObject> list) {
                                 lastParseUpdate = System.currentTimeMillis();
                                 ParseQuery<ParseObject> queryRefreshed = ParseQuery.getQuery(Station.PARSE_CLASS_STATION);
                                 queryFromMnc(mnc, finalValuesCellId, queryRefreshed);

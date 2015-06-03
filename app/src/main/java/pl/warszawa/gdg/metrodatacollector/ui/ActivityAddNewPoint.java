@@ -18,6 +18,7 @@ import android.telephony.NeighboringCellInfo;
 import android.telephony.PhoneStateListener;
 import android.telephony.TelephonyManager;
 import android.telephony.gsm.GsmCellLocation;
+import android.util.Log;
 import android.view.Gravity;
 import android.view.LayoutInflater;
 import android.view.Menu;
@@ -48,13 +49,16 @@ import java.util.List;
 import butterknife.ButterKnife;
 import butterknife.InjectView;
 import butterknife.OnTextChanged;
+import de.greenrobot.event.EventBus;
 import pl.warszawa.gdg.metrodatacollector.AppMetroDataCollector;
 import pl.warszawa.gdg.metrodatacollector.R;
 import pl.warszawa.gdg.metrodatacollector.data.ParseHelper;
 import pl.warszawa.gdg.metrodatacollector.location.PhoneCellListener;
+import pl.warszawa.gdg.metrodatacollector.location.TowerInfo;
+import pl.warszawa.gdg.metrodatacollector.subway.Station;
 
 public class ActivityAddNewPoint extends AppCompatActivity {
-
+    private static final String TAG = ActivityAddNewPoint.class.getSimpleName();
 
     @InjectView(R.id.textViewSelectStation)
     AutoCompleteTextView selectStation;
@@ -70,6 +74,7 @@ public class ActivityAddNewPoint extends AppCompatActivity {
     private TelephonyManager telephonyManager;
 
     public static final String STOP_LISTENING = "Stop_listening";
+    private Station stationToAdd;//Object that user fills information about
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -84,6 +89,28 @@ public class ActivityAddNewPoint extends AppCompatActivity {
         setupMetroStationList();
         setupCurrentCell();
         setupNeighboringCellList();
+        stationToAdd = new Station();
+    }
+
+    @Override
+    protected void onResume() {
+        super.onResume();
+        EventBus.getDefault().register(this);
+    }
+
+    @Override
+    protected void onPause() {
+        EventBus.getDefault().unregister(this);
+        super.onPause();
+    }
+
+    /**
+     * GSM Tower has changed
+     * @param towerInfo
+     */
+    public void onEvent(TowerInfo towerInfo) {
+        //TODO Popup and clean views
+        Log.d(TAG, "onEvent ");
     }
 
     private void setupMetroStationList() {
@@ -221,12 +248,18 @@ public class ActivityAddNewPoint extends AppCompatActivity {
         } else if (id == R.id.action_save) {
             if (Strings.isNullOrEmpty(selectedStation)) {
                 selectStation.setError("Select station from list.");
+            } else {
+                //lets try to send it
+                if(stationToAdd != null && stationToAdd.getName() != null) {//TODO check if one BTS is set
+                    //stationToAdd.updateParse();//and only then send it to Parse
+                }
             }
             return true;
         }
 
         return super.onOptionsItemSelected(item);
     }
+
 
     static class StationAdapter extends BaseAdapter implements Filterable {
         private Context context;

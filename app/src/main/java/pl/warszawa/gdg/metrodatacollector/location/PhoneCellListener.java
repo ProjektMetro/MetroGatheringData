@@ -71,6 +71,7 @@ public class PhoneCellListener extends PhoneStateListener {
         if(prevTower != null && tower != null) {
             Log.d(TAG, "gsmTowerChanged from: " + prevTower.getUniqueId() + ", to: " + tower.getUniqueId());
         }
+        EventBus.getDefault().post(tower);
         if(FlagsLocal.useWifi) {
             try {
                 List<ScanResult> wifiNetworks = NetworkLocation.getAllWifi(context).getScanResults();
@@ -78,7 +79,6 @@ public class PhoneCellListener extends PhoneStateListener {
                 //TODO Handle it
             }
         }
-        EventBus.getDefault().post(tower);
 
         if(FlagsLocal.showNotificationInfo) {
             //TODO first check offline then if not found check online - and update offline storage (?)
