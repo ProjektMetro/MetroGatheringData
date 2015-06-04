@@ -15,46 +15,23 @@ import android.telephony.NeighboringCellInfo;
 import android.telephony.TelephonyManager;
 import android.util.Log;
 
-public class TowerInfo {
+import com.google.common.base.Preconditions;
 
-    public enum Type {
-        PLAY, PLUS, ORANGE, T_MOBILE, OTHER;
-    }
+public class TowerInfo {
 
     private static final String TAG = "TowerInfo";
     private static final int UNKNOWN = -1;
-
+    private boolean registered;
     private int mcc;//Mobile Country Code
     private int mnc;//Mobile Network Code
     private int lac;//Location Area Code
     private int cid;//Cell Identifier for 2G
     private int psc;//Cell Identifier for 3G/LTE
-
     private int pci;//Physical Cell Id
     private int ci;//Cell Identity
     private int tac;//Tracking Area Code
-
     private int networkType;
     private int signalStrength;
-
-    public static TowerInfo getTowerInfo(CellInfo cellInfo) {
-        if (cellInfo instanceof CellInfoLte) {
-            return new TowerInfo(((CellInfoLte) cellInfo).getCellIdentity());
-        } else if (cellInfo instanceof CellInfoGsm) {
-            return new TowerInfo(((CellInfoGsm) cellInfo).getCellIdentity());
-        } else if (cellInfo instanceof CellInfoCdma) {
-            return new TowerInfo(((CellInfoCdma) cellInfo).getCellIdentity());
-        } else if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.JELLY_BEAN_MR2 && cellInfo instanceof CellInfoWcdma) {
-            return new TowerInfo(((CellInfoWcdma) cellInfo).getCellIdentity());
-        }
-        return null;
-    }
-
-    public static TowerInfo getTowerInfo(NeighboringCellInfo cellInfo) {
-        //TODO: To implement
-        return null;
-    }
-
     public TowerInfo(CellIdentityLte cellIdentityLte) {
         this.mcc = cellIdentityLte.getMcc();
         this.mnc = cellIdentityLte.getMnc();
@@ -62,6 +39,7 @@ public class TowerInfo {
         this.tac = cellIdentityLte.getTac();
         this.pci = cellIdentityLte.getPci();
         this.networkType = TelephonyManager.NETWORK_TYPE_LTE;
+
     }
 
     @TargetApi(Build.VERSION_CODES.JELLY_BEAN_MR1)
@@ -86,7 +64,6 @@ public class TowerInfo {
         this.psc = cellIdentityWcdma.getPsc();
     }
 
-
     public TowerInfo(int mcc, int mnc, int lac, int cid, int psc) {
         this.mcc = mcc;
         this.mnc = mnc;
@@ -102,6 +79,40 @@ public class TowerInfo {
         this.cid = cid;
         this.psc = psc;
         this.signalStrength = signalStrength;
+    }
+
+    public static TowerInfo getTowerInfo(CellInfo cellInfo) {
+        Preconditions.checkNotNull(cellInfo);
+
+        TowerInfo result = null;
+        if (cellInfo instanceof CellInfoLte) {
+            result = new TowerInfo(((CellInfoLte) cellInfo).getCellIdentity());
+            ;
+        } else if (cellInfo instanceof CellInfoGsm) {
+            result = new TowerInfo(((CellInfoGsm) cellInfo).getCellIdentity());
+        } else if (cellInfo instanceof CellInfoCdma) {
+            result = new TowerInfo(((CellInfoCdma) cellInfo).getCellIdentity());
+        } else if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.JELLY_BEAN_MR2 && cellInfo instanceof CellInfoWcdma) {
+            result = new TowerInfo(((CellInfoWcdma) cellInfo).getCellIdentity());
+        }
+        Preconditions.checkNotNull(result);
+
+        result.setRegistered(cellInfo.isRegistered());
+        return result;
+    }
+
+    public static TowerInfo getTowerInfo(NeighboringCellInfo cellInfo) {
+        //TODO: To implement
+        return null;
+    }
+
+    public boolean isRegistered() {
+        return registered;
+    }
+
+    public TowerInfo setRegistered(boolean registered) {
+        this.registered = registered;
+        return this;
     }
 
     public int getNetworkType() {
@@ -168,7 +179,6 @@ public class TowerInfo {
         return String.valueOf(mcc) + String.valueOf(mnc) + String.valueOf(lac) + String.valueOf(cid) + String.valueOf(psc);
     }
 
-
     @Override
     public String toString() {
         return "TowerInfo{" +
@@ -188,15 +198,20 @@ public class TowerInfo {
 
     @Override
     public boolean equals(Object o) {
-        if(o == null) {
+        if (o == null) {
             return false;
         }
-        if(o instanceof TowerInfo) {
-            if(this.getUniqueId() == null) {
+        if (o instanceof TowerInfo) {
+            if (this.getUniqueId() == null) {
                 return false;
             }
             return this.getUniqueId().equals(((TowerInfo) o).getUniqueId());
         }
         return false;
+    }
+
+    public enum Type {
+        PLAY, PLUS, ORANGE, T_MOBILE, OTHER;
+
     }
 }

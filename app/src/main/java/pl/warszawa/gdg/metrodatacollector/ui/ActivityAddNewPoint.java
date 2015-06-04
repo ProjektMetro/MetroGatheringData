@@ -1,16 +1,16 @@
 package pl.warszawa.gdg.metrodatacollector.ui;
 
-import android.annotation.TargetApi;
 import android.content.Context;
+import android.content.DialogInterface;
 import android.content.Intent;
+import android.os.Build;
 import android.os.Bundle;
+import android.support.v7.app.AlertDialog;
 import android.support.v7.app.AppCompatActivity;
 import android.telephony.CellInfo;
 import android.telephony.NeighboringCellInfo;
 import android.telephony.PhoneStateListener;
 import android.telephony.TelephonyManager;
-import android.telephony.gsm.GsmCellLocation;
-import android.util.Log;
 import android.view.Gravity;
 import android.view.LayoutInflater;
 import android.view.Menu;
@@ -50,6 +50,7 @@ import pl.warszawa.gdg.metrodatacollector.location.TowerInfo;
 import pl.warszawa.gdg.metrodatacollector.subway.Station;
 
 public class ActivityAddNewPoint extends AppCompatActivity {
+    public static final String STOP_LISTENING = "Stop_listening";
     private static final String TAG = ActivityAddNewPoint.class.getSimpleName();
 
     @InjectView(R.id.textViewSelectStation)
@@ -58,19 +59,15 @@ public class ActivityAddNewPoint extends AppCompatActivity {
     @InjectView(R.id.listViewNeighboringCells)
     ListView listViewNeighboringCells;
 
-    @InjectView(R.id.currentCell)
-    TextView currentCell;
-
     @InjectView(R.id.checkBoxOutside)
     CheckBox outside;
 
     private String selectedStation;
     private List<String> stationList;
     private TelephonyManager telephonyManager;
-
-    public static final String STOP_LISTENING = "Stop_listening";
-    private Station stationToAdd;//Object that user fills information about
     private List<TowerInfo> neighbouringCells;
+    private AlertDialog alert;
+    private TextView neighbouringCellsHeader;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -83,7 +80,6 @@ public class ActivityAddNewPoint extends AppCompatActivity {
         telephonyManager = (TelephonyManager) getSystemService(Context.TELEPHONY_SERVICE);
 
         setupMetroStationList();
-        setupCurrentCell();
         setupNeighboringCellList();
     }
 
@@ -105,8 +101,28 @@ public class ActivityAddNewPoint extends AppCompatActivity {
      * @param towerInfo
      */
     public void onEvent(TowerInfo towerInfo) {
-        //TODO Popup and clean views
-        Log.d(TAG, "onEvent ");
+        if (this.alert != null) {
+            this.alert.dismiss();
+        }
+        this.alert = new AlertDialog.Builder(this)
+                .setMessage("Zmieniłeś swoją pozycję.")
+                .setCancelable(false)
+                .setPositiveButton("OK", new DialogInterface.OnClickListener() {
+                    @Override
+                    public void onClick(DialogInterface dialog, int which) {
+                        selectedStation = "";
+                        selectStation.setText("");
+                        setupNeighboringCellList();
+                    }
+                })
+                .setOnCancelListener(new DialogInterface.OnCancelListener() {
+                    @Override
+                    public void onCancel(DialogInterface dialog) {
+
+                    }
+                })
+                .create();
+        this.alert.show();
     }
 
     private void setupMetroStationList() {
@@ -120,13 +136,6 @@ public class ActivityAddNewPoint extends AppCompatActivity {
                 setupStationList(stationList);
             }
         });
-    }
-
-    private void setupCurrentCell() {
-        GsmCellLocation cellLocation = (GsmCellLocation) telephonyManager.getCellLocation();
-        if(cellLocation != null) {
-            currentCell.setText("" + cellLocation.getCid());
-        }
     }
 
     private void setupStationList(List<String> stationList) {
@@ -147,18 +156,23 @@ public class ActivityAddNewPoint extends AppCompatActivity {
     }
 
     private void setupNeighboringCellList() {
-        TextView header = new TextView(this);
-        header.setGravity(Gravity.CENTER);
-        header.setText("Neighboring Cells:");
-        listViewNeighboringCells.addHeaderView(header);
+        listViewNeighboringCells.removeHeaderView(neighbouringCellsHeader);
+        neighbouringCellsHeader = new TextView(this);
+        neighbouringCellsHeader.setGravity(Gravity.CENTER);
+        neighbouringCellsHeader.setText("Neighboring Cells:");
+        listViewNeighboringCells.addHeaderView(neighbouringCellsHeader);
 
         neighbouringCells = getNeighbouringCells();
         listViewNeighboringCells.setAdapter(new ArrayAdapter<>(this, android.R.layout.simple_list_item_1, neighbouringCells));
     }
 
     private List<TowerInfo> getNeighbouringCells() {
-        List<CellInfo> allCellInfo = telephonyManager.getAllCellInfo();
         List<TowerInfo> result = Lists.newArrayList();
+        List<CellInfo> allCellInfo = null;
+        if (Build.VERSION.SDK_INT > Build.VERSION_CODES.JELLY_BEAN_MR1) {
+            allCellInfo = telephonyManager.getAllCellInfo();
+        }
+
         if (allCellInfo != null && !allCellInfo.isEmpty()) {
             for (CellInfo cellInfo : allCellInfo) {
                 result.add(TowerInfo.getTowerInfo(cellInfo));
@@ -208,6 +222,20 @@ public class ActivityAddNewPoint extends AppCompatActivity {
         }
 
         return super.onOptionsItemSelected(item);
+    }
+
+    @Override
+    public void onNewIntent(Intent intent) {
+        //TODO change this to Broadcast receiver
+        String action = intent.getAction();
+        if (action != null) {
+            if (STOP_LISTENING.equals(action)) {
+                PhoneCellListener phoneCellListener = new PhoneCellListener(ActivityAddNewPoint.this);
+                AppMetroDataCollector.telephonyManager.listen(phoneCellListener, PhoneStateListener.LISTEN_NONE);
+                NotificationHelper.hideRunningNotification(ActivityAddNewPoint.this);
+                System.exit(0);//No no pattern
+            }
+        }
     }
 
     static class StationAdapter extends BaseAdapter implements Filterable {
@@ -263,10 +291,10 @@ public class ActivityAddNewPoint extends AppCompatActivity {
         }
 
         static class ViewHolder {
+            final private View view;
+
             @InjectView(android.R.id.text1)
             TextView text1;
-
-            final private View view;
 
             public ViewHolder(View view) {
                 this.view = view;
@@ -304,19 +332,6 @@ public class ActivityAddNewPoint extends AppCompatActivity {
                     filtered.addAll((List) results.values);
                 }
                 notifyDataSetChanged();
-            }
-        }
-    }
-    @Override
-    public void onNewIntent(Intent intent){
-        //TODO change this to Broadcast receiver
-        String action = intent.getAction();
-        if(action != null){
-            if(STOP_LISTENING.equals(action)) {
-                PhoneCellListener phoneCellListener = new PhoneCellListener(ActivityAddNewPoint.this);
-                AppMetroDataCollector.telephonyManager.listen(phoneCellListener, PhoneStateListener.LISTEN_NONE);
-                NotificationHelper.hideRunningNotification(ActivityAddNewPoint.this);
-                System.exit(0);//No no pattern
             }
         }
     }
