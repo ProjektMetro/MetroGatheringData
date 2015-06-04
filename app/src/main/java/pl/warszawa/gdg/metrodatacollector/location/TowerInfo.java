@@ -1,5 +1,7 @@
 package pl.warszawa.gdg.metrodatacollector.location;
 
+import android.annotation.TargetApi;
+import android.os.Build;
 import android.telephony.CellIdentityCdma;
 import android.telephony.CellIdentityGsm;
 import android.telephony.CellIdentityLte;
