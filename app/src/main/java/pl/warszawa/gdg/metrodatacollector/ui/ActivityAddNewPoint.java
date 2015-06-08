@@ -63,7 +63,6 @@ public class ActivityAddNewPoint extends AppCompatActivity {
     CheckBox outside;
 
     private String selectedStation;
-    private List<String> stationList;
     private TelephonyManager telephonyManager;
     private List<TowerInfo> neighbouringCells;
     private AlertDialog alert;
@@ -79,8 +78,8 @@ public class ActivityAddNewPoint extends AppCompatActivity {
         onNewIntent(getIntent());
         telephonyManager = (TelephonyManager) getSystemService(Context.TELEPHONY_SERVICE);
 
-        setupMetroStationList();
-        setupNeighboringCellList();
+        setupMetroStationView();
+        setupNeighboringCellsView();
     }
 
     @Override
@@ -104,7 +103,12 @@ public class ActivityAddNewPoint extends AppCompatActivity {
         if (this.alert != null) {
             this.alert.dismiss();
         }
-        this.alert = new AlertDialog.Builder(this)
+        this.alert = getOnTowerInfoEventAlertDialog();
+        this.alert.show();
+    }
+
+    private AlertDialog getOnTowerInfoEventAlertDialog() {
+        return new AlertDialog.Builder(this)
                 .setMessage("Zmieniłeś swoją pozycję.")
                 .setCancelable(false)
                 .setPositiveButton("OK", new DialogInterface.OnClickListener() {
@@ -112,7 +116,7 @@ public class ActivityAddNewPoint extends AppCompatActivity {
                     public void onClick(DialogInterface dialog, int which) {
                         selectedStation = "";
                         selectStation.setText("");
-                        setupNeighboringCellList();
+                        setupNeighboringCellsView();
                     }
                 })
                 .setOnCancelListener(new DialogInterface.OnCancelListener() {
@@ -122,10 +126,9 @@ public class ActivityAddNewPoint extends AppCompatActivity {
                     }
                 })
                 .create();
-        this.alert.show();
     }
 
-    private void setupMetroStationList() {
+    private void setupMetroStationView() {
         ParseHelper.getAllStations(new FindCallback<ParseObject>() {
             @Override
             public void done(List<ParseObject> list, ParseException e) {
@@ -133,29 +136,28 @@ public class ActivityAddNewPoint extends AppCompatActivity {
                 for (ParseObject parseObject : list) {
                     stationList.add(ParseHelper.getStation(parseObject).getName());
                 }
-                setupStationList(stationList);
+                setupMetroStationView(stationList);
             }
         });
     }
 
-    private void setupStationList(List<String> stationList) {
-        this.stationList = stationList;
+    private void setupMetroStationView(List<String> stationList) {
         selectStation.setAdapter(new StationAdapter(ActivityAddNewPoint.this, stationList));
 
         selectStation.setOnItemClickListener(new AdapterView.OnItemClickListener() {
             @Override
             public void onItemClick(AdapterView<?> parent, View view, int position, long id) {
-                stationItemClicked(((TextView) view).getText().toString());
+                stationListItemClicked(((TextView) view).getText().toString());
             }
         });
     }
 
-    private void stationItemClicked(String station) {
+    private void stationListItemClicked(String station) {
         selectedStation = station;
         selectStation.setError(null);
     }
 
-    private void setupNeighboringCellList() {
+    private void setupNeighboringCellsView() {
         listViewNeighboringCells.removeHeaderView(neighbouringCellsHeader);
         neighbouringCellsHeader = new TextView(this);
         neighbouringCellsHeader.setGravity(Gravity.CENTER);
@@ -209,19 +211,23 @@ public class ActivityAddNewPoint extends AppCompatActivity {
         if (id == R.id.action_settings) {
             return true;
         } else if (id == R.id.action_save) {
-            if (Strings.isNullOrEmpty(selectedStation)) {
-                selectStation.setError("Select station from list.");
-            } else {
-                Station.Builder builder = new Station.Builder(selectedStation);
-                for (TowerInfo towerInfo : neighbouringCells) {
-                    builder.gsm(towerInfo, outside.isChecked());
-                }
-                builder.build().updateParse();
-            }
+            onSaveOptionSelected();
             return true;
         }
 
         return super.onOptionsItemSelected(item);
+    }
+
+    private void onSaveOptionSelected() {
+        if (Strings.isNullOrEmpty(selectedStation)) {
+            selectStation.setError("Select station from list.");
+        } else {
+            Station.Builder builder = new Station.Builder(selectedStation);
+            for (TowerInfo towerInfo : neighbouringCells) {
+                builder.gsm(towerInfo, outside.isChecked());
+            }
+            builder.build().updateParse();
+        }
     }
 
     @Override
