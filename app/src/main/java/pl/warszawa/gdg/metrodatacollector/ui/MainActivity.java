@@ -7,7 +7,11 @@ import android.view.Menu;
 import android.view.MenuItem;
 import android.widget.Switch;
 
+import com.google.android.gms.location.Geofence;
 import com.parse.ParseAnalytics;
+
+import java.util.ArrayList;
+import java.util.List;
 
 import butterknife.ButterKnife;
 import butterknife.InjectView;
@@ -25,6 +29,8 @@ public class MainActivity extends AppCompatActivity {
     @InjectView(R.id.switchBackgroundState)
     Switch switchBackgroundState;
 
+    List<Geofence> mGeofenceList;
+
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
@@ -38,6 +44,37 @@ public class MainActivity extends AppCompatActivity {
         if(savedInstanceState != null) {
             //TODO restore previous state
         }
+
+        if(FlagsLocal.useGeofance) {
+            mGeofenceList = new ArrayList<>();
+            createGeofences();
+        }
+    }
+
+    public void createGeofences(){
+
+        //TODO take a list of metro stations
+        //TODO export constants
+        String requestId = "1";
+        float GEOFENCE_RADIUS_METERS = 50.0f;
+        double latitude = 0;
+        double longitude = 0;
+        long GEOFENCE_EXPIRATION_TIME = Geofence.NEVER_EXPIRE;
+
+        mGeofenceList.add(new Geofence.Builder()
+                // Set the request ID of the geofence. This is a string to identify this
+                // geofence.
+                .setRequestId(requestId)
+
+                .setCircularRegion(
+                        latitude,
+                        longitude,
+                        GEOFENCE_RADIUS_METERS
+                )
+                .setExpirationDuration(GEOFENCE_EXPIRATION_TIME)
+                .setTransitionTypes(Geofence.GEOFENCE_TRANSITION_ENTER |
+                        Geofence.GEOFENCE_TRANSITION_EXIT)
+                .build());
     }
 
     @Override

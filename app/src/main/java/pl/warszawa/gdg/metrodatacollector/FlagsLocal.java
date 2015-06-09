@@ -16,6 +16,7 @@ public class FlagsLocal {
     public static final boolean uploadOnline = false;
     public static final boolean writeFile = false;
     public static final boolean showNotificationProgress = false;
+    public static final boolean useGeofance = false;
 
     public static boolean runBackground = false;
     public static boolean useWifi = false;
