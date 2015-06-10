@@ -6,6 +6,7 @@
     <uses-permission android:name="android.permission.INTERNET" />
     <uses-permission android:name="android.permission.ACCESS_NETWORK_STATE" />
     <uses-permission android:name="android.permission.ACCESS_COARSE_LOCATION" />
+    <uses-permission android:name="android.permission.ACCESS_FINE_LOCATION"/>
     <uses-permission android:name="android.permission.VIBRATE" />
     <uses-permission android:name="android.permission.WAKE_LOCK" />
     <uses-permission android:name="android.permission.GET_ACCOUNTS" />
@@ -17,7 +18,6 @@
         android:protectionLevel="signature" />
 
     <uses-permission android:name="pl.warszawa.gdg.metrodatacollector.permission.C2D_MESSAGE" />
-    <uses-permission android:name="android.permission.ACCESS_FINE_LOCATION"/>
 
     <application
         android:name=".AppMetroDataCollector"
@@ -35,7 +35,7 @@
             </intent-filter>
         </activity>
         <!-- GEOFENCING -->
-        <service android:name="pl.warszawa.gdg.metrodatacollector.GeofenceTransitionsIntentService"/>
+        <service android:name=".location.geofence.GeofenceTransitionsIntentService"/>
         <!-- PARSE -->
         <service android:name="com.parse.PushService" />
 

@@ -1,4 +1,4 @@
-package pl.warszawa.gdg.metrodatacollector;
+package pl.warszawa.gdg.metrodatacollector.location.geofence;
 
 import com.google.android.gms.location.Geofence;
 

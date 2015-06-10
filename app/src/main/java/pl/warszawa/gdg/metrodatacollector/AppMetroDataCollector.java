@@ -1,27 +1,27 @@
 package pl.warszawa.gdg.metrodatacollector;
 
-import android.app.Activity;
 import android.app.Application;
 import android.app.PendingIntent;
 import android.content.Context;
 import android.content.Intent;
-import android.content.IntentSender;
 import android.content.SharedPreferences;
 import android.os.Bundle;
 import android.util.Log;
+import android.widget.Toast;
 
 import com.crashlytics.android.Crashlytics;
 import com.google.android.gms.common.ConnectionResult;
 import com.google.android.gms.common.GooglePlayServicesUtil;
 import com.google.android.gms.common.api.GoogleApiClient;
 import com.google.android.gms.common.api.PendingResult;
-import com.google.android.gms.common.api.Result;
 import com.google.android.gms.common.api.ResultCallback;
 import com.google.android.gms.common.api.Status;
 import com.google.android.gms.location.Geofence;
 import com.google.android.gms.location.GeofencingRequest;
 import com.google.android.gms.location.LocationServices;
+import com.parse.ParseException;
 import com.parse.ParseInstallation;
+import com.parse.ParseObject;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -29,20 +29,24 @@ import java.util.List;
 import io.fabric.sdk.android.Fabric;
 import pl.warszawa.gdg.metrodatacollector.data.ParseHelper;
 import pl.warszawa.gdg.metrodatacollector.data.ParseInitOutside;
+import pl.warszawa.gdg.metrodatacollector.data.ParseUpdateCallback;
 import pl.warszawa.gdg.metrodatacollector.location.NetworkLocation;
 import pl.warszawa.gdg.metrodatacollector.location.PhoneCellListener;
+import pl.warszawa.gdg.metrodatacollector.location.geofence.GeofenceConstants;
+import pl.warszawa.gdg.metrodatacollector.location.geofence.GeofenceTransitionsIntentService;
+import pl.warszawa.gdg.metrodatacollector.subway.Station;
 import pl.warszawa.gdg.metrodatacollector.subway.SubwaySystem;
-import pl.warszawa.gdg.metrodatacollector.ui.MainActivity;
 
-public class AppMetroDataCollector extends Application implements ResultCallback, GoogleApiClient.ConnectionCallbacks,
-        GoogleApiClient.OnConnectionFailedListener{
+public class AppMetroDataCollector extends Application implements GoogleApiClient.ConnectionCallbacks {
+    private static final String TAG = AppMetroDataCollector.class.getSimpleName();
     public static boolean isRunning; //CellId Service status
     public static SubwaySystem subwaySystem;
     public static PhoneCellListener phoneCellListener;
     public static SharedPreferences sharedPreferences;
 
-    List<Geofence> mGeofenceList;
-    PendingIntent mGeofencePendingIntent;
+    private static ResultCallback resultCallback;
+    private List<Geofence> mGeofenceList;
+    private PendingIntent mGeofencePendingIntent;
     private GoogleApiClient mGoogleApiClient;
     @Override
     public void onCreate() {
@@ -66,49 +70,76 @@ public class AppMetroDataCollector extends Application implements ResultCallback
         subwaySystem = new SubwaySystem();
         NetworkLocation.init(AppMetroDataCollector.this);
         ParseHelper.updateLocalStations();
-
-        if (FlagsLocal.useGeofance) {
-            if (!isGooglePlayServicesAvailable()) {
-                Log.e(GeofenceConstants.GEOTAG, "Google Play services unavailable.");
-                return;
+        ParseHelper.updateLocalStations(new ParseUpdateCallback() {
+            @Override
+            public void success(List<ParseObject> list) {
+                mGeofenceList = new ArrayList<Geofence>();
+                for(ParseObject parseObject : list) {
+                    Station station = ParseHelper.getStation(parseObject);
+                    if(station.getLocation() != null) {
+                        mGeofenceList.add(new Geofence.Builder()
+                                .setRequestId(station.getName())
+                                .setCircularRegion(
+                                        station.getLocation().getLatitude(),
+                                        station.getLocation().getLongitude(),
+                                        GeofenceConstants.GEOFENCE_RADIUS_METERS)
+                                .setExpirationDuration(GeofenceConstants.GEOFENCE_EXPIRATION_TIME)
+                                .setTransitionTypes(Geofence.GEOFENCE_TRANSITION_ENTER | Geofence.GEOFENCE_TRANSITION_EXIT)
+                                .build());
+                    }
+                }
+                if (FlagsLocal.useGeofance) {
+                    initGeofences();
+                }
             }
 
-            mGoogleApiClient = new GoogleApiClient.Builder(this)
-                    .addApi(LocationServices.API)
-                    .addConnectionCallbacks(this)
-                    .addOnConnectionFailedListener(this)
-                    .build();
+            @Override
+            public void failure(ParseException parseException) {
+                Toast.makeText(AppMetroDataCollector.this, "Failed to fetch station list", Toast.LENGTH_LONG).show();
+                Log.e(TAG, "failure :" + parseException.getLocalizedMessage());
+            }
+        });
 
-            mGoogleApiClient.connect();
-            //TODO create storage
-            mGeofenceList = new ArrayList<>();
-            createGeofences();
 
-        }
     }
-    private void createGeofences(){
 
-        //TODO take a list of metro stations
-        String requestId = "1";
-        double latitude = 0;
-        double longitude = 0;
+    private void initGeofences() {
+        if (!isGooglePlayServicesAvailable()) {
+            Log.e(TAG, "Google Play services unavailable.");
+            return;
+        }
 
+        resultCallback = new ResultCallback<Status>() {
+            @Override
+            public void onResult(Status status) {
+                if (status.isSuccess()) {
+                    Log.e(TAG, "Registering success.");
+                }else {
+                    Log.e(TAG, "Registering failed: " + status.getStatusMessage());
+                }
+            }
+        };
+
+        //addMockLocation();
+
+        mGoogleApiClient = new GoogleApiClient.Builder(this)
+                .addApi(LocationServices.API)
+                .addConnectionCallbacks(this)
+                .build();
+
+        mGoogleApiClient.connect();
+    }
+
+    private void addMockLocation() {
         mGeofenceList.add(new Geofence.Builder()
-                // Set the request ID of the geofence. This is a string to identify this
-                // geofence.
-                .setRequestId(requestId)
-
+                .setRequestId("mock_location")
                 .setCircularRegion(
-                        latitude,
-                        longitude,
-                        GeofenceConstants.GEOFENCE_RADIUS_METERS
-                )
+                        52.262201,
+                        20.971661,
+                        GeofenceConstants.GEOFENCE_RADIUS_METERS)
                 .setExpirationDuration(GeofenceConstants.GEOFENCE_EXPIRATION_TIME)
-                .setTransitionTypes(Geofence.GEOFENCE_TRANSITION_ENTER |
-                        Geofence.GEOFENCE_TRANSITION_EXIT)
+                .setTransitionTypes(Geofence.GEOFENCE_TRANSITION_ENTER | Geofence.GEOFENCE_TRANSITION_EXIT)
                 .build());
-
-        //TODO add to storage ??
     }
 
     private GeofencingRequest getGeofencingRequest() {
@@ -130,14 +161,6 @@ public class AppMetroDataCollector extends Application implements ResultCallback
                 FLAG_UPDATE_CURRENT);
     }
 
-    @Override
-    public void onResult(Result result) {
-        if (result.getStatus().isSuccess()) {
-            Log.e(GeofenceConstants.GEOTAG, "Registering success.");
-        }else
-            Log.e(GeofenceConstants.GEOTAG, "Registering failed: " + result.getStatus().getStatusMessage());
-
-    }
 
     @Override
     public void onConnected(Bundle bundle) {
@@ -146,24 +169,13 @@ public class AppMetroDataCollector extends Application implements ResultCallback
                 getGeofencingRequest(),
                 getGeofencePendingIntent()
         );
-
-            result.setResultCallback(this);
+        result.setResultCallback(resultCallback);
     }
 
     @Override
     public void onConnectionSuspended(int i) {
-        LocationServices.GeofencingApi.removeGeofences(
-                mGoogleApiClient,
-                // This is the same pending intent that was used in addGeofences().
-                getGeofencePendingIntent()
-        ).setResultCallback(this); // Result processed in onResult().
     }
 
-    @Override
-    public void onConnectionFailed(ConnectionResult connectionResult) {
-            int errorCode = connectionResult.getErrorCode();
-            Log.e(GeofenceConstants.GEOTAG, "Connection to Google Play services failed with error code " + errorCode);
-    }
     /**
      * Checks if Google Play services is available.
      * @return true if it is.

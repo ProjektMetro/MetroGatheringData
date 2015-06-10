@@ -1,18 +1,18 @@
-package pl.warszawa.gdg.metrodatacollector;
+package pl.warszawa.gdg.metrodatacollector.location.geofence;
 
 import android.app.IntentService;
 import android.content.Context;
 import android.content.Intent;
 import android.text.TextUtils;
 import android.util.Log;
-import android.widget.Toast;
 
 import com.google.android.gms.location.Geofence;
 import com.google.android.gms.location.GeofencingEvent;
-import com.google.android.gms.location.GeofenceStatusCodes;
 
 import java.util.ArrayList;
 import java.util.List;
+
+import pl.warszawa.gdg.metrodatacollector.R;
 
 
 /**
