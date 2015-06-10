@@ -29,6 +29,7 @@ import butterknife.OnClick;
 import de.greenrobot.event.EventBus;
 import pl.warszawa.gdg.metrodatacollector.AppMetroDataCollector;
 import pl.warszawa.gdg.metrodatacollector.FlagsLocal;
+import pl.warszawa.gdg.metrodatacollector.GeofenceConstants;
 import pl.warszawa.gdg.metrodatacollector.GeofenceTransitionsIntentService;
 import pl.warszawa.gdg.metrodatacollector.R;
 import pl.warszawa.gdg.metrodatacollector.location.PhoneCellListener;
@@ -42,8 +43,6 @@ public class MainActivity extends AppCompatActivity
 
     @InjectView(R.id.switchBackgroundState)
     Switch switchBackgroundState;
-
-    public static final String GEOTAG = "GEO";
 
     List<Geofence> mGeofenceList;
     PendingIntent mGeofencePendingIntent;
@@ -64,7 +63,7 @@ public class MainActivity extends AppCompatActivity
         }
 
         if(FlagsLocal.useGeofance) {        if (!isGooglePlayServicesAvailable()) {
-            Log.e(GEOTAG, "Google Play services unavailable.");
+            Log.e(GeofenceConstants.GEOTAG, "Google Play services unavailable.");
             finish();
             return;
         }
@@ -154,12 +153,9 @@ public class MainActivity extends AppCompatActivity
     private void createGeofences(){
 
         //TODO take a list of metro stations
-        //TODO export constants
         String requestId = "1";
-        float GEOFENCE_RADIUS_METERS = 50.0f;
         double latitude = 0;
         double longitude = 0;
-        long GEOFENCE_EXPIRATION_TIME = Geofence.NEVER_EXPIRE;
 
         mGeofenceList.add(new Geofence.Builder()
                 // Set the request ID of the geofence. This is a string to identify this
@@ -169,14 +165,14 @@ public class MainActivity extends AppCompatActivity
                 .setCircularRegion(
                         latitude,
                         longitude,
-                        GEOFENCE_RADIUS_METERS
+                        GeofenceConstants.GEOFENCE_RADIUS_METERS
                 )
-                .setExpirationDuration(GEOFENCE_EXPIRATION_TIME)
+                .setExpirationDuration(GeofenceConstants.GEOFENCE_EXPIRATION_TIME)
                 .setTransitionTypes(Geofence.GEOFENCE_TRANSITION_ENTER |
                         Geofence.GEOFENCE_TRANSITION_EXIT)
                 .build());
 
-        //TODO add to storage
+        //TODO add to storage ??
     }
 
     private GeofencingRequest getGeofencingRequest() {
@@ -223,19 +219,18 @@ public class MainActivity extends AppCompatActivity
 
     @Override
     public void onConnectionFailed(ConnectionResult connectionResult) {
-        // Request code to attempt to resolve Google Play services connection failures.
-        int CONNECTION_FAILURE_RESOLUTION_REQUEST = 9000;
+
         // If the error has a resolution, start a Google Play services activity to resolve it.
         if (connectionResult.hasResolution()) {
             try {
                 connectionResult.startResolutionForResult(this,
-                        CONNECTION_FAILURE_RESOLUTION_REQUEST);
+                        GeofenceConstants.CONNECTION_FAILURE_RESOLUTION_REQUEST);
             } catch (IntentSender.SendIntentException e) {
-                Log.e(GEOTAG, "Exception while resolving connection error.", e);
+                Log.e(GeofenceConstants.GEOTAG, "Exception while resolving connection error.", e);
             }
         } else {
             int errorCode = connectionResult.getErrorCode();
-            Log.e(GEOTAG, "Connection to Google Play services failed with error code " + errorCode);
+            Log.e(GeofenceConstants.GEOTAG, "Connection to Google Play services failed with error code " + errorCode);
         }
     }
     /**
@@ -245,12 +240,12 @@ public class MainActivity extends AppCompatActivity
     private boolean isGooglePlayServicesAvailable() {
         int resultCode = GooglePlayServicesUtil.isGooglePlayServicesAvailable(this);
         if (ConnectionResult.SUCCESS == resultCode) {
-            if (Log.isLoggable(GEOTAG, Log.DEBUG)) {
-                Log.d(GEOTAG, "Google Play services is available.");
+            if (Log.isLoggable(GeofenceConstants.GEOTAG, Log.DEBUG)) {
+                Log.d(GeofenceConstants.GEOTAG, "Google Play services is available.");
             }
             return true;
         } else {
-            Log.e(GEOTAG, "Google Play services is unavailable.");
+            Log.e(GeofenceConstants.GEOTAG, "Google Play services is unavailable.");
             return false;
         }
     }
