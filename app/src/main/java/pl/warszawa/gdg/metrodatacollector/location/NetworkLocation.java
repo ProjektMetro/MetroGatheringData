@@ -15,6 +15,7 @@ import android.telephony.CellInfoGsm;
 import android.telephony.CellInfoLte;
 import android.telephony.CellInfoWcdma;
 import android.telephony.NeighboringCellInfo;
+import android.telephony.PhoneStateListener;
 import android.telephony.TelephonyManager;
 import android.telephony.gsm.GsmCellLocation;
 import android.util.Log;
@@ -22,9 +23,21 @@ import android.util.Log;
 import java.util.ArrayList;
 import java.util.List;
 
+import pl.warszawa.gdg.metrodatacollector.AppMetroDataCollector;
+
 
 public class NetworkLocation {
-    private static final String TAG = "NetworkLocation";
+    private static final String TAG = NetworkLocation.class.getSimpleName();
+
+    public static TelephonyManager telephonyManager;
+    private static TowerInfo prevTower;
+    private static TowerInfo currentTower;
+
+    public static void init(Context context) {
+        if(telephonyManager == null) {
+            telephonyManager = (TelephonyManager) context.getSystemService(Context.TELEPHONY_SERVICE);
+        }
+    }
 
     public static WifiLocation getAllWifi(Context context) {
         WifiManager manager = (WifiManager) context.getSystemService(Context.WIFI_SERVICE);
@@ -132,6 +145,21 @@ public class NetworkLocation {
         }
     }
 
+    public static TowerInfo getCurrentTower() {
+        return currentTower;
+    }
+
+    @TargetApi(Build.VERSION_CODES.JELLY_BEAN_MR1)
+    public static TowerInfo getCurrentTower(Context context) {
+        if(telephonyManager == null) {
+            telephonyManager = (TelephonyManager) context.getSystemService(Context.TELEPHONY_SERVICE);
+        }
+
+        List<CellInfo> cells = telephonyManager.getAllCellInfo();
+        currentTower = NetworkLocation.findConnectedTower(cells);
+        return  currentTower;
+    }
+
     @TargetApi(Build.VERSION_CODES.JELLY_BEAN_MR2)
     public static TowerInfo findConnectedTower(List<CellInfo> cells) {
         if(cells == null) {
@@ -157,5 +185,24 @@ public class NetworkLocation {
             }
         }
         return null;
+    }
+
+
+    /**
+     * Register to LISTEN_SIGNAL_STRENGTHS to detect cellId changes in background
+     */
+    public static void registerToCellEvent() {
+        if(telephonyManager !=  null) {
+            NetworkLocation.telephonyManager.listen(AppMetroDataCollector.phoneCellListener, PhoneStateListener.LISTEN_SIGNAL_STRENGTHS);
+        }
+    }
+
+    /**
+     * Stop listening to LISTEN_SIGNAL_STRENGTHS
+     */
+    public static void unregisterToCellEvent() {
+        if(telephonyManager !=  null) {
+            NetworkLocation.telephonyManager.listen(AppMetroDataCollector.phoneCellListener, PhoneStateListener.LISTEN_NONE);
+        }
     }
 }

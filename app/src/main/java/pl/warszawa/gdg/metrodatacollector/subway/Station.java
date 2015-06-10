@@ -1,13 +1,13 @@
 package pl.warszawa.gdg.metrodatacollector.subway;
 
 import android.location.Location;
-import android.util.Log;
 
 import com.google.common.collect.Lists;
 import com.parse.GetCallback;
 import com.parse.ParseException;
 import com.parse.ParseObject;
 import com.parse.ParseQuery;
+import com.parse.SaveCallback;
 
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -75,7 +75,7 @@ public class Station extends MapElement {
 
         public Builder gsm(TowerInfo towerInfo, boolean outside) {
             TowerInfo.Type towerType = towerInfo.getType();
-            String gsmId = Integer.toString(towerInfo.getCid());
+            String gsmId = towerInfo.getUniqueId();
 
             if (TowerInfo.Type.PLUS.equals(towerType)) {
                 if (outside) {
@@ -300,7 +300,7 @@ public class Station extends MapElement {
     /**
      * Used for updating whole object, use it carefully!
      */
-    public void updateParse() {
+    public void updateParse(final SaveCallback saveCallback) {
         ParseQuery<ParseObject> query = ParseQuery.getQuery(PARSE_CLASS_STATION);
         query.whereEqualTo(PARSE_NAME, getName());
         query.getFirstInBackground(new GetCallback<ParseObject>() {
@@ -360,10 +360,10 @@ public class Station extends MapElement {
                 if (getWifiBssids() != null) {
                     parseObject.addAllUnique(PARSE_BSSIDS, Arrays.asList(getWifiBssids()));
                 }
-                try {
-                    parseObject.save();
-                } catch (ParseException e1) {
-                    Log.d(TAG, "done error while saving: " + e1.getLocalizedMessage());
+                if(saveCallback != null) {
+                    parseObject.saveEventually(saveCallback);
+                } else {
+                    parseObject.saveEventually();
                 }
             }
         });

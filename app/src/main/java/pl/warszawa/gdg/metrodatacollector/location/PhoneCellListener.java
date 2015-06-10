@@ -52,9 +52,7 @@ public class PhoneCellListener extends PhoneStateListener {
         prevMeasurement = System.currentTimeMillis();
         NotificationHelper.showRunningNotification(context);
 
-        TelephonyManager telephonyManager = (TelephonyManager) context.getSystemService(Context.TELEPHONY_SERVICE);
-        List<CellInfo> cells = telephonyManager.getAllCellInfo();
-        TowerInfo tower = NetworkLocation.findConnectedTower(cells);
+        TowerInfo tower = NetworkLocation.getCurrentTower(context);
 
         if(tower == null) {
             //TODO Eventbus with problem to determine location
@@ -63,13 +61,13 @@ public class PhoneCellListener extends PhoneStateListener {
 
         if(!tower.equals(prevTower)) {
             //Towers has changed!
-            tower.setNetworkType(telephonyManager.getNetworkType());
-            gsmTowerChanged(tower, prevTower, telephonyManager, cells);
+            tower.setNetworkType( NetworkLocation.telephonyManager.getNetworkType());
+            gsmTowerChanged(tower, prevTower);
             prevTower = tower;
         }
     }
 
-    private void gsmTowerChanged(final TowerInfo tower, TowerInfo prevTower, TelephonyManager telephonyManager, List<CellInfo> cells){
+    private void gsmTowerChanged(final TowerInfo tower, TowerInfo prevTower){
         Log.d(TAG, "gsmTowerChanged from:" + prevTower + ", to: " + tower);
         if(prevTower != null && tower != null) {
             Log.d(TAG, "gsmTowerChanged from: " + prevTower.getUniqueId() + ", to: " + tower.getUniqueId());

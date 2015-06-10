@@ -3,29 +3,23 @@ package pl.warszawa.gdg.metrodatacollector.ui;
 import android.content.Context;
 import android.content.DialogInterface;
 import android.content.Intent;
-import android.os.Build;
 import android.os.Bundle;
 import android.support.v7.app.AlertDialog;
 import android.support.v7.app.AppCompatActivity;
-import android.telephony.CellInfo;
-import android.telephony.NeighboringCellInfo;
-import android.telephony.PhoneStateListener;
-import android.telephony.TelephonyManager;
-import android.view.Gravity;
+import android.util.Log;
 import android.view.LayoutInflater;
 import android.view.Menu;
 import android.view.MenuItem;
 import android.view.View;
 import android.view.ViewGroup;
 import android.widget.AdapterView;
-import android.widget.ArrayAdapter;
 import android.widget.AutoCompleteTextView;
 import android.widget.BaseAdapter;
 import android.widget.CheckBox;
 import android.widget.Filter;
 import android.widget.Filterable;
-import android.widget.ListView;
 import android.widget.TextView;
+import android.widget.Toast;
 
 import com.google.common.base.Predicate;
 import com.google.common.base.Strings;
@@ -34,6 +28,7 @@ import com.google.common.collect.Lists;
 import com.parse.FindCallback;
 import com.parse.ParseException;
 import com.parse.ParseObject;
+import com.parse.SaveCallback;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -42,9 +37,9 @@ import butterknife.ButterKnife;
 import butterknife.InjectView;
 import butterknife.OnTextChanged;
 import de.greenrobot.event.EventBus;
-import pl.warszawa.gdg.metrodatacollector.AppMetroDataCollector;
 import pl.warszawa.gdg.metrodatacollector.R;
 import pl.warszawa.gdg.metrodatacollector.data.ParseHelper;
+import pl.warszawa.gdg.metrodatacollector.location.NetworkLocation;
 import pl.warszawa.gdg.metrodatacollector.location.PhoneCellListener;
 import pl.warszawa.gdg.metrodatacollector.location.TowerInfo;
 import pl.warszawa.gdg.metrodatacollector.subway.Station;
@@ -56,17 +51,11 @@ public class ActivityAddNewPoint extends AppCompatActivity {
     @InjectView(R.id.textViewSelectStation)
     AutoCompleteTextView selectStation;
 
-    @InjectView(R.id.listViewNeighboringCells)
-    ListView listViewNeighboringCells;
-
     @InjectView(R.id.checkBoxOutside)
     CheckBox outside;
 
     private String selectedStation;
-    private TelephonyManager telephonyManager;
-    private List<TowerInfo> neighbouringCells;
     private AlertDialog alert;
-    private TextView neighbouringCellsHeader;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -76,10 +65,8 @@ public class ActivityAddNewPoint extends AppCompatActivity {
 
         ButterKnife.inject(this);
         onNewIntent(getIntent());
-        telephonyManager = (TelephonyManager) getSystemService(Context.TELEPHONY_SERVICE);
 
         setupMetroStationView();
-        setupNeighboringCellsView();
     }
 
     @Override
@@ -116,7 +103,6 @@ public class ActivityAddNewPoint extends AppCompatActivity {
                     public void onClick(DialogInterface dialog, int which) {
                         selectedStation = "";
                         selectStation.setText("");
-                        setupNeighboringCellsView();
                     }
                 })
                 .setOnCancelListener(new DialogInterface.OnCancelListener() {
@@ -157,36 +143,6 @@ public class ActivityAddNewPoint extends AppCompatActivity {
         selectStation.setError(null);
     }
 
-    private void setupNeighboringCellsView() {
-        listViewNeighboringCells.removeHeaderView(neighbouringCellsHeader);
-        neighbouringCellsHeader = new TextView(this);
-        neighbouringCellsHeader.setGravity(Gravity.CENTER);
-        neighbouringCellsHeader.setText("Neighboring Cells:");
-        listViewNeighboringCells.addHeaderView(neighbouringCellsHeader);
-
-        neighbouringCells = getNeighbouringCells();
-        listViewNeighboringCells.setAdapter(new ArrayAdapter<>(this, android.R.layout.simple_list_item_1, neighbouringCells));
-    }
-
-    private List<TowerInfo> getNeighbouringCells() {
-        List<TowerInfo> result = Lists.newArrayList();
-        List<CellInfo> allCellInfo = null;
-        if (Build.VERSION.SDK_INT > Build.VERSION_CODES.JELLY_BEAN_MR1) {
-            allCellInfo = telephonyManager.getAllCellInfo();
-        }
-
-        if (allCellInfo != null && !allCellInfo.isEmpty()) {
-            for (CellInfo cellInfo : allCellInfo) {
-                result.add(TowerInfo.getTowerInfo(cellInfo));
-            }
-        } else {
-            for (NeighboringCellInfo cellInfo : telephonyManager.getNeighboringCellInfo()) {
-                result.add(TowerInfo.getTowerInfo(cellInfo));
-            }
-        }
-        return result;
-    }
-
     @OnTextChanged(R.id.textViewSelectStation)
     public void onStationNameTextChanged() {
         selectedStation = null;
@@ -222,11 +178,21 @@ public class ActivityAddNewPoint extends AppCompatActivity {
         if (Strings.isNullOrEmpty(selectedStation)) {
             selectStation.setError("Select station from list.");
         } else {
-            Station.Builder builder = new Station.Builder(selectedStation);
-            for (TowerInfo towerInfo : neighbouringCells) {
-                builder.gsm(towerInfo, outside.isChecked());
-            }
-            builder.build().updateParse();
+            final Station.Builder builder = new Station.Builder(selectedStation);
+            builder.gsm(NetworkLocation.getCurrentTower(ActivityAddNewPoint.this), outside.isChecked());
+
+            final Station station = builder.build();
+            station.updateParse(new SaveCallback() {
+                @Override
+                public void done(ParseException e) {
+                    if (e == null) {
+                        Toast.makeText(ActivityAddNewPoint.this, "Saved " + station.getName(), Toast.LENGTH_SHORT).show();
+                    } else {
+                        Log.d(TAG, "save station, error: " + e.getLocalizedMessage());
+                        Toast.makeText(ActivityAddNewPoint.this, "Not saved: " + e.getLocalizedMessage(), Toast.LENGTH_LONG).show();
+                    }
+                }
+            });
         }
     }
 
@@ -237,7 +203,7 @@ public class ActivityAddNewPoint extends AppCompatActivity {
         if (action != null) {
             if (STOP_LISTENING.equals(action)) {
                 PhoneCellListener phoneCellListener = new PhoneCellListener(ActivityAddNewPoint.this);
-                AppMetroDataCollector.telephonyManager.listen(phoneCellListener, PhoneStateListener.LISTEN_NONE);
+                NetworkLocation.unregisterToCellEvent();
                 NotificationHelper.hideRunningNotification(ActivityAddNewPoint.this);
                 System.exit(0);//No no pattern
             }

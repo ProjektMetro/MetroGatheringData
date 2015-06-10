@@ -27,11 +27,11 @@ import butterknife.ButterKnife;
 import butterknife.InjectView;
 import butterknife.OnClick;
 import de.greenrobot.event.EventBus;
-import pl.warszawa.gdg.metrodatacollector.AppMetroDataCollector;
 import pl.warszawa.gdg.metrodatacollector.FlagsLocal;
 import pl.warszawa.gdg.metrodatacollector.GeofenceConstants;
 import pl.warszawa.gdg.metrodatacollector.GeofenceTransitionsIntentService;
 import pl.warszawa.gdg.metrodatacollector.R;
+import pl.warszawa.gdg.metrodatacollector.location.NetworkLocation;
 import pl.warszawa.gdg.metrodatacollector.location.PhoneCellListener;
 import pl.warszawa.gdg.metrodatacollector.location.TowerInfo;
 
@@ -112,9 +112,9 @@ public class MainActivity extends AppCompatActivity
         PhoneCellListener.reset();
         FlagsLocal.runBackground = !switchBackgroundState.isChecked();
         if(!FlagsLocal.runBackground) {
-            AppMetroDataCollector.registerToCellEvent();
+            NetworkLocation.registerToCellEvent();
         } else {
-            AppMetroDataCollector.unregisterToCellEvent();
+            NetworkLocation.unregisterToCellEvent();
         }
     }
 

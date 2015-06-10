@@ -182,7 +182,7 @@ public class SubwaySystem {
             stations.add((Station)element);
             subwayLine.addStation((Station) element);
             if(FlagsLocal.parseUploadHardcodedData) {
-                ((Station) element).updateParse();
+                ((Station) element).updateParse(null);
             }
         } else if (element instanceof Track) {
             subwayLine.addMapElemnent(element);
