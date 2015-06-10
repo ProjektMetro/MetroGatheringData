@@ -4,19 +4,19 @@ package pl.warszawa.gdg.metrodatacollector;
 import android.content.SharedPreferences;
 
 public class FlagsLocal {
-    public static final boolean fabricEnabled = false;
-    public static final boolean parseEnabled = true;
-    public static final boolean parsePushes = true;
+    public static boolean fabricEnabled = false;
+    public static boolean parseEnabled = true;
+    public static boolean parsePushes = true;
 
     /**
      * Used to upload data that is hardcoded at app start to Parse.com - use if Parse table is empty.
      */
-    public static final boolean parseUploadHardcodedData = false;
+    public static boolean parseUploadHardcodedData = false;
 
-    public static final boolean uploadOnline = false;
-    public static final boolean writeFile = false;
-    public static final boolean showNotificationProgress = false;
-    public static final boolean useGeofance = true;
+    public static boolean uploadOnline = false;
+    public static boolean writeFile = false;
+    public static boolean showNotificationProgress = false;
+    public static boolean useGeofance = true;
 
     public static boolean runBackground = false;
     public static boolean useWifi = false;
@@ -35,5 +35,6 @@ public class FlagsLocal {
 
     public static void read() {
         //TODO read from SharedPreferences (as in save())
+        runBackground = AppMetroDataCollector.sharedPreferences.getBoolean(PREFS_RUN_BACKGROUND, false);
     }
 }
