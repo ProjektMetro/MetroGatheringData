@@ -14,8 +14,10 @@ import com.crashlytics.android.Crashlytics;
 import com.google.android.gms.common.ConnectionResult;
 import com.google.android.gms.common.GooglePlayServicesUtil;
 import com.google.android.gms.common.api.GoogleApiClient;
+import com.google.android.gms.common.api.PendingResult;
 import com.google.android.gms.common.api.Result;
 import com.google.android.gms.common.api.ResultCallback;
+import com.google.android.gms.common.api.Status;
 import com.google.android.gms.location.Geofence;
 import com.google.android.gms.location.GeofencingRequest;
 import com.google.android.gms.location.LocationServices;
@@ -130,16 +132,22 @@ public class AppMetroDataCollector extends Application implements ResultCallback
 
     @Override
     public void onResult(Result result) {
-        //TODO for Geofencing
+        if (result.getStatus().isSuccess()) {
+            Log.e(GeofenceConstants.GEOTAG, "Registering success.");
+        }else
+            Log.e(GeofenceConstants.GEOTAG, "Registering failed: " + result.getStatus().getStatusMessage());
+
     }
 
     @Override
     public void onConnected(Bundle bundle) {
-        LocationServices.GeofencingApi.addGeofences(
+        PendingResult<Status> result = LocationServices.GeofencingApi.addGeofences(
                 mGoogleApiClient,
                 getGeofencingRequest(),
                 getGeofencePendingIntent()
-        ).setResultCallback(this);
+        );
+
+            result.setResultCallback(this);
     }
 
     @Override
