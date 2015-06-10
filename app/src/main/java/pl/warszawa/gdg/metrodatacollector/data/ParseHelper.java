@@ -1,5 +1,6 @@
 package pl.warszawa.gdg.metrodatacollector.data;
 
+import android.location.Location;
 import android.util.Log;
 
 import com.parse.FindCallback;
@@ -280,6 +281,15 @@ public class ParseHelper {
         station.setSeparatedPlatforms(parseObject.getBoolean(Station.PARSE_PLATFORMS));
         station.setDistanceInMeters(parseObject.getInt(Station.PARSE_DISTANCE_METERS));
         station.setDistanceInSeconds(parseObject.getInt(Station.PARSE_DISTANCE_SECONDS));
+
+        String locLat = parseObject.getString(Station.PARSE_LOCATION_LAT);
+        String locLon = parseObject.getString(Station.PARSE_LOCATION_LON);
+        if(locLat != null &&  locLat.length() > 0 && locLon != null && locLon.length() > 0) {
+            Location stationLocation = new Location("");//provider name is unecessary
+            stationLocation.setLatitude(Double.valueOf(locLat));
+            stationLocation.setLongitude(Double.valueOf(locLon));
+            station.setLocation(stationLocation);
+        }
 
         return station;
     }
