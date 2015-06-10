@@ -178,22 +178,38 @@ public class ActivityAddNewPoint extends AppCompatActivity {
         if (Strings.isNullOrEmpty(selectedStation)) {
             selectStation.setError("Select station from list.");
         } else {
-            final Station.Builder builder = new Station.Builder(selectedStation);
-            builder.gsm(NetworkLocation.getCurrentTower(ActivityAddNewPoint.this), outside.isChecked());
-
-            final Station station = builder.build();
-            station.updateParse(new SaveCallback() {
+            final TowerInfo towerInfo = NetworkLocation.getCurrentTower(ActivityAddNewPoint.this);
+            if (towerInfo == null) {
+                Toast.makeText(ActivityAddNewPoint.this, "Problem with GSM module", Toast.LENGTH_SHORT).show();
+                return;
+            }
+            ParseHelper.getStation(towerInfo.getUniqueId(), towerInfo.getMnc(), new FindCallback<ParseObject>() {
                 @Override
-                public void done(ParseException e) {
-                    if (e == null) {
-                        Toast.makeText(ActivityAddNewPoint.this, "Saved " + station.getName(), Toast.LENGTH_SHORT).show();
+                public void done(List list, ParseException e) {
+                    if (list != null && list.size() > 0) {
+                        //there is station already
+                        Log.d(TAG, "done station exists");
                     } else {
-                        Log.d(TAG, "save station, error: " + e.getLocalizedMessage());
-                        Toast.makeText(ActivityAddNewPoint.this, "Not saved: " + e.getLocalizedMessage(), Toast.LENGTH_LONG).show();
+                        final Station.Builder builder = new Station.Builder(selectedStation);
+                        builder.gsm(towerInfo, outside.isChecked());
+
+                        final Station station = builder.build();
+                        station.updateParse(new SaveCallback() {
+                            @Override
+                            public void done(ParseException e) {
+                                if (e == null) {
+                                    Toast.makeText(ActivityAddNewPoint.this, "Saved " + station.getName(), Toast.LENGTH_SHORT).show();
+                                } else {
+                                    Log.d(TAG, "save station, error: " + e.getLocalizedMessage());
+                                    Toast.makeText(ActivityAddNewPoint.this, "Not saved: " + e.getLocalizedMessage(), Toast.LENGTH_LONG).show();
+                                }
+                            }
+                        });
                     }
                 }
             });
         }
+
     }
 
     @Override
