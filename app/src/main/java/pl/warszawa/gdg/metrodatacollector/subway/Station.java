@@ -292,7 +292,7 @@ public class Station extends MapElement {
     public static final String PARSE_DISTANCE_METERS = "SubwayElementDistanceMeters";
     public static final String PARSE_DISTANCE_SECONDS = "SubwayElementDistanceSeconds";
     public static final String PARSE_LOCATION_LAT = "SubwayElementLocationLat";
-    public static final String PARSE_LOCATION_LON = "SubwayElementLocatioNLon";
+    public static final String PARSE_LOCATION_LON = "SubwayElementLocationLon";
     public static final String PARSE_LINES = "SubwayElementLines";
     public static final String PARSE_PLATFORMS = "SubwayElementPlatforms";
     public static final String PARSE_BSSIDS = "SubwayElementBssids";
