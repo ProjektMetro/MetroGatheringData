@@ -62,6 +62,7 @@ public class MainActivity extends AppCompatActivity {
     @Override
     protected void onResume() {
         super.onResume();
+        FlagsLocal.read();
     }
 
     @OnClick(R.id.switchBackgroundState)

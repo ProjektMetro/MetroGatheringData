@@ -36,7 +36,7 @@ public class FlagsLocal {
     private static final String PREFS_USEWIFI = "PREFS_USEWIFI";
     private static final String PREFS_SHOWNOTIFICATIONINFO = "PREFS_SHOWNOTIFICATIONINFO";
 
-    private static void save() {
+    public static void save() {
         SharedPreferences.Editor editor = AppMetroDataCollector.sharedPreferences.edit();
         editor.putBoolean(PREFS_FABRICENABLED, fabricEnabled);
         editor.putBoolean(PREFS_PARSEENABLED, parseEnabled);
