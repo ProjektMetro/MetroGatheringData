@@ -15,8 +15,9 @@ import butterknife.OnClick;
 import de.greenrobot.event.EventBus;
 import pl.warszawa.gdg.metrodatacollector.FlagsLocal;
 import pl.warszawa.gdg.metrodatacollector.R;
-import pl.warszawa.gdg.metrodatacollector.location.NetworkLocation;
-import pl.warszawa.gdg.metrodatacollector.location.PhoneCellListener;
+import pl.warszawa.gdg.metrodatacollector.data.busEvents.BackgroundServiceStop;
+import pl.warszawa.gdg.metrodatacollector.location.CellMonitorReceiver;
+import pl.warszawa.gdg.metrodatacollector.location.CellMonitorService;
 import pl.warszawa.gdg.metrodatacollector.location.TowerInfo;
 
 public class MainActivity extends AppCompatActivity {
@@ -53,6 +54,15 @@ public class MainActivity extends AppCompatActivity {
 
     }
 
+    /**
+     * CallMonitor receiver and service has stopped - no more background updates
+     * */
+    public void onEvent(BackgroundServiceStop backgroundServiceStop) {
+        if(switchBackgroundState != null && switchBackgroundState.isChecked()) {
+            switchBackgroundState.setChecked(false);
+        }
+    }
+
     @Override
     protected void onPause() {
         super.onPause();
@@ -67,12 +77,12 @@ public class MainActivity extends AppCompatActivity {
 
     @OnClick(R.id.switchBackgroundState)
     public void changeBackgroundState() {
-        PhoneCellListener.reset();
+        CellMonitorService.reset();
         FlagsLocal.runBackground = !switchBackgroundState.isChecked();
         if(!FlagsLocal.runBackground) {
-            NetworkLocation.registerToCellEvent();
+            CellMonitorReceiver.scheduleGsmMonitor(MainActivity.this);
         } else {
-            NetworkLocation.unregisterToCellEvent();
+            CellMonitorReceiver.stopGsmMonitor(MainActivity.this);
         }
     }
 

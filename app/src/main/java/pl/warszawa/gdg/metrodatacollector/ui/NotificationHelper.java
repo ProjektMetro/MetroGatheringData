@@ -7,6 +7,7 @@ import android.content.Intent;
 import android.support.v4.app.NotificationCompat;
 
 import pl.warszawa.gdg.metrodatacollector.R;
+import pl.warszawa.gdg.metrodatacollector.location.CellMonitorReceiver;
 import pl.warszawa.gdg.metrodatacollector.subway.Station;
 
 public class NotificationHelper {
@@ -54,8 +55,9 @@ public class NotificationHelper {
         intent.setFlags(Intent.FLAG_ACTIVITY_CLEAR_TOP);
         PendingIntent pendingIntent = PendingIntent.getActivity(context, 0, intent, 0);
 
-        intent.setAction(ActivityAddNewPoint.STOP_LISTENING);
-        PendingIntent pendingStopIntent = PendingIntent.getActivity(context, 0, intent, 0);
+        Intent receiverIntent = new Intent(context, CellMonitorReceiver.class);
+        receiverIntent.setAction(CellMonitorReceiver.ACTION_STOP_SERVICE);
+        PendingIntent pendingStopReceiverIntent = PendingIntent.getBroadcast(context, 0, receiverIntent,0);
 
 
         NotificationCompat.Builder mBuilder =
@@ -66,7 +68,7 @@ public class NotificationHelper {
                         .setContentText("New cell id detected: " + cellId)
                         .setDefaults(NotificationCompat.DEFAULT_ALL)
                 .addAction(new NotificationCompat.Action(R.drawable.ic_action_add, "Add", pendingIntent))
-                .addAction(new NotificationCompat.Action(R.drawable.ic_action_pause, "Exit", pendingStopIntent));
+                .addAction(new NotificationCompat.Action(R.drawable.ic_action_pause, "Exit", pendingStopReceiverIntent));
         getNotificationManager(context).notify(NOTIFICATION_UNKNOWN_ID, mBuilder.build());
     }
 
@@ -80,10 +82,9 @@ public class NotificationHelper {
 
     public static void showRunningNotification(Context context) {
         if(!isNotificationVisible(context, 4455)) {
-            Intent intent = new Intent(context, ActivityAddNewPoint.class);
-            intent.setFlags(Intent.FLAG_ACTIVITY_CLEAR_TOP);
-            intent.setAction(ActivityAddNewPoint.STOP_LISTENING);
-            PendingIntent pendingStopIntent = PendingIntent.getActivity(context, 0, intent, 0);
+            Intent receiverIntent = new Intent(context, CellMonitorReceiver.class);
+            receiverIntent.setAction(CellMonitorReceiver.ACTION_STOP_SERVICE);
+            PendingIntent pendingStopReceiverIntent = PendingIntent.getBroadcast(context, 0, receiverIntent,0);
 
 
             NotificationCompat.Builder mBuilder =
@@ -93,7 +94,7 @@ public class NotificationHelper {
                             .setOngoing(true)
                             .setProgress(0, 0, true)
                             .setContentTitle("Gathering data... ")
-                            .addAction(new NotificationCompat.Action(R.drawable.ic_action_pause, "Exit", pendingStopIntent));
+                            .addAction(new NotificationCompat.Action(R.drawable.ic_action_pause, "Exit", pendingStopReceiverIntent));
             ;
             getNotificationManager(context).notify(NOTIFICATION_RUNNING_ID, mBuilder.build());
         }

@@ -15,15 +15,12 @@ import android.telephony.CellInfoGsm;
 import android.telephony.CellInfoLte;
 import android.telephony.CellInfoWcdma;
 import android.telephony.NeighboringCellInfo;
-import android.telephony.PhoneStateListener;
 import android.telephony.TelephonyManager;
 import android.telephony.gsm.GsmCellLocation;
 import android.util.Log;
 
 import java.util.ArrayList;
 import java.util.List;
-
-import pl.warszawa.gdg.metrodatacollector.AppMetroDataCollector;
 
 
 public class NetworkLocation {
@@ -185,24 +182,5 @@ public class NetworkLocation {
             }
         }
         return null;
-    }
-
-
-    /**
-     * Register to LISTEN_SIGNAL_STRENGTHS to detect cellId changes in background
-     */
-    public static void registerToCellEvent() {
-        if(telephonyManager !=  null) {
-            NetworkLocation.telephonyManager.listen(AppMetroDataCollector.phoneCellListener, PhoneStateListener.LISTEN_SIGNAL_STRENGTHS);
-        }
-    }
-
-    /**
-     * Stop listening to LISTEN_SIGNAL_STRENGTHS
-     */
-    public static void unregisterToCellEvent() {
-        if(telephonyManager !=  null) {
-            NetworkLocation.telephonyManager.listen(AppMetroDataCollector.phoneCellListener, PhoneStateListener.LISTEN_NONE);
-        }
     }
 }

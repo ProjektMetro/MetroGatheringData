@@ -39,8 +39,8 @@ import butterknife.OnTextChanged;
 import de.greenrobot.event.EventBus;
 import pl.warszawa.gdg.metrodatacollector.R;
 import pl.warszawa.gdg.metrodatacollector.data.ParseHelper;
+import pl.warszawa.gdg.metrodatacollector.location.CellMonitorReceiver;
 import pl.warszawa.gdg.metrodatacollector.location.NetworkLocation;
-import pl.warszawa.gdg.metrodatacollector.location.PhoneCellListener;
 import pl.warszawa.gdg.metrodatacollector.location.TowerInfo;
 import pl.warszawa.gdg.metrodatacollector.subway.Station;
 
@@ -218,9 +218,7 @@ public class ActivityAddNewPoint extends AppCompatActivity {
         String action = intent.getAction();
         if (action != null) {
             if (STOP_LISTENING.equals(action)) {
-                PhoneCellListener phoneCellListener = new PhoneCellListener(ActivityAddNewPoint.this);
-                NetworkLocation.unregisterToCellEvent();
-                NotificationHelper.hideRunningNotification(ActivityAddNewPoint.this);
+                CellMonitorReceiver.stopGsmMonitor(ActivityAddNewPoint.this);
                 System.exit(0);//No no pattern
             }
         }

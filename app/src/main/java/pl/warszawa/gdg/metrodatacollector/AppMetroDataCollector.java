@@ -31,9 +31,10 @@ import pl.warszawa.gdg.metrodatacollector.data.ParseHelper;
 import pl.warszawa.gdg.metrodatacollector.data.ParseInitOutside;
 import pl.warszawa.gdg.metrodatacollector.data.ParseUpdateCallback;
 import pl.warszawa.gdg.metrodatacollector.location.NetworkLocation;
-import pl.warszawa.gdg.metrodatacollector.location.PhoneCellListener;
+import pl.warszawa.gdg.metrodatacollector.location.TowerInfo;
 import pl.warszawa.gdg.metrodatacollector.location.geofence.GeofenceConstants;
 import pl.warszawa.gdg.metrodatacollector.location.geofence.GeofenceTransitionsIntentService;
+import pl.warszawa.gdg.metrodatacollector.subway.MapElement;
 import pl.warszawa.gdg.metrodatacollector.subway.Station;
 import pl.warszawa.gdg.metrodatacollector.subway.SubwaySystem;
 
@@ -41,13 +42,18 @@ public class AppMetroDataCollector extends Application implements GoogleApiClien
     private static final String TAG = AppMetroDataCollector.class.getSimpleName();
     public static boolean isRunning; //CellId Service status
     public static SubwaySystem subwaySystem;
-    public static PhoneCellListener phoneCellListener;
     public static SharedPreferences sharedPreferences;
 
     private static ResultCallback resultCallback;
     private List<Geofence> mGeofenceList;
     private PendingIntent mGeofencePendingIntent;
     private GoogleApiClient mGoogleApiClient;
+
+    //Used in CellMonitorReceiver
+    public static MapElement mapElementPrev;//As only info about towerCurrent is not enough (can switch 2g->3g in same place)
+    public static TowerInfo towerCurrent;
+    public static TowerInfo towerPrev;
+
     @Override
     public void onCreate() {
         sharedPreferences = AppMetroDataCollector.this.getSharedPreferences("pl.warszawa.gdg.metrodatacollector", Context.MODE_PRIVATE);
@@ -65,8 +71,6 @@ public class AppMetroDataCollector extends Application implements GoogleApiClien
                 }
             }
         }
-
-        phoneCellListener = new PhoneCellListener(AppMetroDataCollector.this);
         subwaySystem = new SubwaySystem();
         NetworkLocation.init(AppMetroDataCollector.this);
         ParseHelper.updateLocalStations();
