@@ -179,6 +179,8 @@ public class ParseHelper {
                                 findCallback.done(null, parseException);
                             }
                         });
+                    } else {
+                        findCallback.done(null, null);
                     }
                 } else {
                     findCallback.done(list, e);

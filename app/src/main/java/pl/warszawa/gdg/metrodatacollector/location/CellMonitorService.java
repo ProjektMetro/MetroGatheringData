@@ -59,37 +59,54 @@ public class CellMonitorService extends Service {
                 //TODO Handle it
             }
         }
-
-        if(FlagsLocal.showNotificationInfo) {
-            //Check if we know towerId
-            //If not ask to add place
-            ParseHelper.getStation(tower.getUniqueId(), tower.getMnc(), new FindCallback<ParseObject>() {
-                @Override
-                public void done(List<ParseObject> list, ParseException e) {
-                    if (list != null && list.size() > 0 && list.get(0) != null) {
-                        Station station = ParseHelper.getStation(list.get(0));
-                        if (station != null && station.getName() != null) {
-                            Log.d(TAG, "gsmTowerChanged station known: " + station);
-                            //check if place has actually changed - as can be 2g->3g in same place
-                            if (!station.equals(AppMetroDataCollector.mapElementPrev)) {
-                                //We checked if we are at same place but on different cellId
-                                AppMetroDataCollector.mapElementPrev = station;
-                                NotificationHelper.showStation(station, CellMonitorService.this);
-                                NotificationHelper.hideNotificationNewPlace(CellMonitorService.this);
-                            }
-                        } else {
-                            //Place not known, lets ask to add it
-                            NotificationHelper.showNotificationNewPlace(tower.getUniqueId(), CellMonitorService.this);
-                            NotificationHelper.hideStationNotification(CellMonitorService.this);
+        if(AppMetroDataCollector.timeLastKnownLocation != 0
+                && System.currentTimeMillis() - AppMetroDataCollector.timeLastKnownLocation > CellMonitorReceiver.TIMEOUT_WITHOUT_KNOWN_TOWER) {
+            CellMonitorReceiver.stopGsmMonitor(CellMonitorService.this);
+            return;
+        }
+        ParseHelper.getStation(tower.getUniqueId(), tower.getMnc(), new FindCallback<ParseObject>() {
+            @Override
+            public void done(List<ParseObject> list, ParseException e) {
+                if (list != null && list.size() > 0 && list.get(0) != null) {
+                    Station station = ParseHelper.getStation(list.get(0));
+                    if (station != null && station.getName() != null) {
+                        Log.d(TAG, "gsmTowerChanged station known: " + station);
+                        AppMetroDataCollector.timeLastKnownLocation = System.currentTimeMillis();
+                        //check if place has actually changed - as can be 2g->3g in same place
+                        if (!station.equals(AppMetroDataCollector.mapElementPrev)) {
+                            //We checked if we are at same place but on different cellId
+                            AppMetroDataCollector.mapElementPrev = station;
+                            showNotificationKnown(station);
                         }
                     } else {
                         //Place not known, lets ask to add it
-                        NotificationHelper.showNotificationNewPlace(tower.getUniqueId(), CellMonitorService.this);
-                        NotificationHelper.hideStationNotification(CellMonitorService.this);
+                        showNotificationNewPlace(tower);
                     }
-                    //TODO stopSelf() here also?
+                } else {
+                    //Place not known, lets ask to add it
+                    showNotificationNewPlace(tower);
                 }
-            });
+                //TODO stopSelf() here also?
+            }
+        });
+
+    }
+
+    private void showNotificationKnown(Station station) {
+        if(FlagsLocal.showNotificationInfo) {
+            //Check if we know towerId
+            //If not ask to add place
+            NotificationHelper.showStation(station, CellMonitorService.this);
+            NotificationHelper.hideNotificationNewPlace(CellMonitorService.this);
+        }
+    }
+
+    private void showNotificationNewPlace(TowerInfo tower) {
+        if(FlagsLocal.showNotificationInfo) {
+            //Check if we know towerId
+            //If not ask to add place
+            NotificationHelper.showNotificationNewPlace(tower.getUniqueId(), CellMonitorService.this);
+            NotificationHelper.hideStationNotification(CellMonitorService.this);
         }
     }
 

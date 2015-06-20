@@ -13,17 +13,18 @@ import java.util.ArrayList;
 import java.util.List;
 
 import pl.warszawa.gdg.metrodatacollector.R;
+import pl.warszawa.gdg.metrodatacollector.location.CellMonitorReceiver;
 
 
 /**
  * Created by gbielanski on 2015-06-03.
  */
-public class GeofenceTransitionsIntentService extends IntentService {
+public class GeofenceIntentService extends IntentService {
 
     public static final String TAG = "GeofenceService";
 
-    public GeofenceTransitionsIntentService(){
-        super(GeofenceTransitionsIntentService.class.getSimpleName());
+    public GeofenceIntentService(){
+        super(GeofenceIntentService.class.getSimpleName());
     }
 
     private String getTransitionString(int transitionType) {
@@ -82,6 +83,7 @@ public class GeofenceTransitionsIntentService extends IntentService {
 
             // Send notification and log the transition details
             Log.i(TAG, geofenceTransitionDetails);
+            CellMonitorReceiver.scheduleGsmMonitor(GeofenceIntentService.this);
         } else {
             // Log the error.
             Log.e(TAG, getString(R.string.geofence_transition_invalid_type,

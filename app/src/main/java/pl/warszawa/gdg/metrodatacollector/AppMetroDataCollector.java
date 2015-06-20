@@ -33,7 +33,7 @@ import pl.warszawa.gdg.metrodatacollector.data.ParseUpdateCallback;
 import pl.warszawa.gdg.metrodatacollector.location.NetworkLocation;
 import pl.warszawa.gdg.metrodatacollector.location.TowerInfo;
 import pl.warszawa.gdg.metrodatacollector.location.geofence.GeofenceConstants;
-import pl.warszawa.gdg.metrodatacollector.location.geofence.GeofenceTransitionsIntentService;
+import pl.warszawa.gdg.metrodatacollector.location.geofence.GeofenceIntentService;
 import pl.warszawa.gdg.metrodatacollector.subway.MapElement;
 import pl.warszawa.gdg.metrodatacollector.subway.Station;
 import pl.warszawa.gdg.metrodatacollector.subway.SubwaySystem;
@@ -53,6 +53,7 @@ public class AppMetroDataCollector extends Application implements GoogleApiClien
     public static MapElement mapElementPrev;//As only info about towerCurrent is not enough (can switch 2g->3g in same place)
     public static TowerInfo towerCurrent;
     public static TowerInfo towerPrev;
+    public static long timeLastKnownLocation;
 
     @Override
     public void onCreate() {
@@ -158,7 +159,7 @@ public class AppMetroDataCollector extends Application implements GoogleApiClien
         if (mGeofencePendingIntent != null) {
             return mGeofencePendingIntent;
         }
-        Intent intent = new Intent(this, GeofenceTransitionsIntentService.class);
+        Intent intent = new Intent(this, GeofenceIntentService.class);
         // We use FLAG_UPDATE_CURRENT so that we get the same pending intent back when
         // calling addGeofences() and removeGeofences().
         return PendingIntent.getService(this, 0, intent, PendingIntent.

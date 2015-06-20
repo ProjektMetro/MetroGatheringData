@@ -48,7 +48,7 @@
         </service>
 
         <!-- GEOFENCING -->
-        <service android:name=".location.geofence.GeofenceTransitionsIntentService" />
+        <service android:name=".location.geofence.GeofenceIntentService" />
 
 
         <!-- PARSE -->

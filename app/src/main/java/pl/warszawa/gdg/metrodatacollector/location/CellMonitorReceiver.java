@@ -17,6 +17,7 @@ public class CellMonitorReceiver extends BroadcastReceiver {
     public static final String ACTION_RUN_SERVICE = "ACTION_RUN_SERVICE";
     public static final String ACTION_STOP_SERVICE = "ACTION_STOP_SERVICE";
     public static final long DELAY_15_SECONDS = 15000;
+    public static final long TIMEOUT_WITHOUT_KNOWN_TOWER = 300000;
 
     @Override
     final public void onReceive(Context context, Intent intent) {

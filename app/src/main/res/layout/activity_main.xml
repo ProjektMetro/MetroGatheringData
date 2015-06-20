@@ -6,10 +6,21 @@
     tools:context=".MainActivity">
 
     <Button
-        android:id="@+id/buttonAddPlace"
+        android:id="@+id/buttonCheckLocation"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
         android:layout_margin="10dp"
+        android:text="Check location" />
+
+    <Button
+        android:id="@+id/buttonAddPlace"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:layout_marginRight="10dp"
+        android:layout_marginEnd="10dp"
+        android:layout_marginStart="10dp"
+        android:layout_marginLeft="10dp"
+        android:layout_marginBottom="10dp"
         android:text="Add place" />
 
     <View
@@ -49,12 +60,14 @@
         android:layout_height="45dp"
         android:layout_margin="10dp"
         android:checked="false"
-        android:text="Use Wifi" />
+        android:text="Use Wifi"
+        android:visibility="gone" />
 
     <View
         android:layout_width="match_parent"
         android:layout_height="1dp"
-        android:background="@color/divider_settings" />
+        android:background="@color/divider_settings"
+        android:visibility="gone" />
 
     <Switch
         android:id="@+id/switchUpload"
@@ -62,12 +75,14 @@
         android:layout_height="45dp"
         android:layout_margin="10dp"
         android:checked="false"
-        android:text="Upload data" />
+        android:text="Upload data"
+        android:visibility="gone" />
 
     <View
         android:layout_width="match_parent"
         android:layout_height="1dp"
-        android:background="@color/divider_settings" />
+        android:background="@color/divider_settings"
+        android:visibility="gone" />
 
     <Switch
         android:id="@+id/switchAutorun"
@@ -75,10 +90,12 @@
         android:layout_height="45dp"
         android:layout_margin="10dp"
         android:checked="false"
-        android:text="Auto start in metro" />
+        android:text="Auto start in metro"
+        android:visibility="gone" />
 
     <View
         android:layout_width="match_parent"
         android:layout_height="1dp"
-        android:background="@color/divider_settings" />
+        android:background="@color/divider_settings"
+        android:visibility="gone" />
 </LinearLayout>
