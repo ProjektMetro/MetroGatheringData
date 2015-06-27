@@ -1,4 +1,4 @@
-package pl.warszawa.gdg.metrodatacollector;
+package pl.warszawa.gdg.metrodatacollector.test;
 
 import android.app.Application;
 import android.test.ApplicationTestCase;
